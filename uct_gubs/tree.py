@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from typing import Callable
 
 from pddlgym.structs import Literal
 
@@ -26,7 +27,7 @@ class Tree:
     def is_leaf(self):
         return all((c is None for c in self.children.values()))
 
-    def initialize_children(self, actions, cost_fn, h, env):
+    def initialize_children(self, actions, cost_fn, h, env, h_weight=0):
         logging.debug("initializing children")
         valid_actions_outcomes = get_valid_actions_and_outcomes(
             self.s[0], actions, env)
@@ -35,8 +36,10 @@ class Tree:
         logging.debug("found following valid actions on initialization: " +
                       f"{self.valid_actions}")
 
+        self.n = h_weight
         for a, outcomes in valid_actions_outcomes.items():
             # initialize q-value with heuristic for current state
+            # TODO -> incorporate prob heuristic here
             self.qs[a] = h(self.s[0])
             self.n_as[a] = 0
 
@@ -51,7 +54,7 @@ class Tree:
                     prob=outcome.prob,
                     node=new_tree(ext_state, self.depth + 1, actions))
 
-    def traverse(self, fn):
+    def traverse(self, fn: Callable[["Tree"], None]):
         fn(self)
 
         if not self.children:

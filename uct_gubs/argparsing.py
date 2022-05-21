@@ -7,6 +7,7 @@ DEFAULT_HORIZON = 20
 DEFAULT_NROLLOUTS = 1000
 DEFAULT_N_SIM_STEPS = 10
 DEFAULT_EXPLORATION_CONSTANT = math.sqrt(2)
+DEFAULT_INIT_COUNT = 0
 DEFAULT_KG = 1
 DEFAULT_LAMBDA = -0.1
 DEFAULT_LOGGING_LEVEL = logging.INFO
@@ -78,6 +79,13 @@ def parse_args():
         default=DEFAULT_EXPLORATION_CONSTANT,
         dest='exploration_constant',
         help="Exploration constant used for UCT equation (default: %s)" %
+        str(DEFAULT_INIT_COUNT))
+    parser.add_argument(
+        '--h_init_count',
+        type=float,
+        default=DEFAULT_INIT_COUNT,
+        dest='h_init_count',
+        help="Visit count to give to initialized nodes (default: %s)" %
         str(DEFAULT_EXPLORATION_CONSTANT))
     parser.add_argument('--k_g',
                         dest='k_g',

@@ -7,9 +7,12 @@ import matplotlib
 
 import uct_gubs.argparsing as argparsing
 import uct_gubs.heuristics as heuristics
-import uct_gubs.mdp as mdp
+import uct_gubs.mdp.general as mdp
 import uct_gubs.output as output
 import uct_gubs.context as context
+
+# TODO -> optimize code based on profiling
+# TODO -> adapt code for doing experiments
 
 matplotlib.use('TkAgg')
 
@@ -46,8 +49,8 @@ def h1(_):
 
 h = heuristics.build_hv(env, args.lamb)
 
-ctx = context.ProblemContext(env, problem_index, h, u,
-                             mdp.build_std_cost_fn(goal),
+ctx = context.ProblemContext(env, obs.literals, problem_index, h,
+                             args.h_init_count, u, mdp.build_std_cost_fn(goal),
                              args.exploration_constant, args.k_g,
                              args.n_rollouts, args.horizon)
 mdp_tree, pi_func, n_updates = mdp.simulate_with_uct_gubs(
