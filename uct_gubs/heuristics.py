@@ -262,6 +262,7 @@ navigation_keys = [f"PDDLEnvNavigation{i}-v0" for i in navigation_is]
 
 value_heuristic_data_functions = {
     "PDDLEnvTireworld-v0": tireworld_shortest_path,
+    "PDDLEnvTireworld_mini-v0": tireworld_shortest_path,
     "PDDLEnvRiver-alt-v0": river_data,
     **{k: navigation_data
        for k in navigation_keys}
@@ -276,6 +277,7 @@ prob_heuristic_data_functions = {
 
 value_heuristic_functions = {
     "PDDLEnvTireworld-v0": tireworld_h_v,
+    "PDDLEnvTireworld_mini-v0": tireworld_h_v,
     "PDDLEnvRiver-alt-v0": river_h_v,
     "PDDLEnvExplodingblocks-v0": expblocks_h_v,
     **{k: navigation_h_v
