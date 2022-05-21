@@ -3,11 +3,10 @@ import math
 import time
 
 import numpy as np
-import pddlgym.core as pddlcore
 from pddlgym.inference import check_goal
 from pddlgym.structs import Literal
 
-from uct_gubs import context, error, tree, pddl, rendering
+from uct_gubs import context, tree, pddl, rendering
 from uct_gubs.mdp.types import ExtendedState
 
 SQRT_TWO = math.sqrt(2)
