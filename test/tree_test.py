@@ -1,6 +1,6 @@
 import unittest
 
-import uct_gubs.mdp as mdp
+import uct_gubs.mdp.general as mdp
 import uct_gubs.pddl as pddl
 import uct_gubs.tree as tree
 
@@ -69,16 +69,21 @@ class TestTree(unittest.TestCase):
         assert frozenset(children) == expected_actions
 
         child_movecar12 = children[action_movecar12]
-        child_movecar12_states = frozenset(child_movecar12)
+        child_movecar12_states = {
+            ext_state: node_outcome.prob
+            for ext_state, node_outcome in child_movecar12.items()
+        }
 
-        assert child_movecar12_states == frozenset({(s_12_flat, 1),
-                                                    (s_12_notflat, 1)})
-        for child_state, child_node in child_movecar12.items():
-            assert child_node.depth == mdp_tree.depth + 1
+        assert child_movecar12_states == ({
+            (s_12_flat, 1): 0.5,
+            (s_12_notflat, 1): 0.5
+        })
+        for child_node_outcome in child_movecar12.values():
+            assert child_node_outcome.node.depth == mdp_tree.depth + 1
 
         child_movecar21 = children[action_movecar21]
         child_movecar21_states = frozenset(child_movecar21)
         assert child_movecar21_states == frozenset({(s_21_flat, 1),
                                                     (s_21_notflat, 1)})
-        for child_state, child_node in child_movecar21.items():
-            assert child_node.depth == mdp_tree.depth + 1
+        for child_node_outcome in child_movecar21.values():
+            assert child_node_outcome.node.depth == mdp_tree.depth + 1

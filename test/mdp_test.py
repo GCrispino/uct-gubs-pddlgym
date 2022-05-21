@@ -5,7 +5,8 @@ import numpy as np
 import pddlgym.core as pddlcore
 from pddlgym.structs import Literal, Predicate
 
-from uct_gubs import context, mdp, pddl, tree
+import uct_gubs.mdp.general as mdp
+from uct_gubs import context, pddl, tree
 from test.utils import get_env_info
 
 (tireworld_env, tireworld_problem, tireworld_s0, tireworld_actions,
@@ -148,7 +149,7 @@ class TestSearch(unittest.TestCase):
             tireworld_env)
         assert sampled_next_node.s in mdp_tree.children[action_movecar12]
         assert sampled_next_node == mdp_tree.children[action_movecar12][
-            sampled_next_node.s]
+            sampled_next_node.s].node
 
     def test_search(self):
         # instantiate/create domain and tree
@@ -159,7 +160,7 @@ class TestSearch(unittest.TestCase):
         k_g = 1
         n_rollouts = 0  # not needed for this test
         horizon = 10
-        ctx = context.ProblemContext(tireworld_env, 0, h,
+        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0, h, 0,
                                      mdp.risk_exp_fn(lamb),
                                      mdp.build_std_cost_fn(tireworld_goal),
                                      mdp.SQRT_TWO, k_g, n_rollouts, horizon)
@@ -192,7 +193,7 @@ class TestSearch(unittest.TestCase):
 
         # assert valid action set for each state in the tree is correct
         def get_valid_actions_callback(node):
-            valid_actions_dict = pddl.get_valid_actions_and_successors(
+            valid_actions_dict = pddl.get_valid_actions_and_outcomes(
                 node.s[0], tireworld_actions, tireworld_env)
 
             valid_actions_actual = set(valid_actions_dict)
@@ -228,7 +229,7 @@ class TestSearch(unittest.TestCase):
         k_g = 1
         n_rollouts = 0  # not needed for this test
         horizon = 10
-        ctx = context.ProblemContext(tireworld_env, 0, h,
+        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0, h, 0,
                                      mdp.risk_exp_fn(lamb),
                                      mdp.build_std_cost_fn(tireworld_goal),
                                      mdp.SQRT_TWO, k_g, n_rollouts, horizon)
