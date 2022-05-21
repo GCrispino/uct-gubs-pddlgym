@@ -1,6 +1,8 @@
 import pddlgym.core as pddlcore
 from pddlgym.structs import Literal, Predicate, State, Type
 
+from uct_gubs.mdp.types import StateOutcome
+
 
 def from_literals(literals):
     empty_set = frozenset()
@@ -26,20 +28,21 @@ def create_literal(pred_name: str,
                   [Type(type_str) for type_str in type_strs]), variables)
 
 
-def get_valid_actions_and_successors(
+def get_valid_actions_and_outcomes(
         s: frozenset[Literal], actions,
-        env) -> dict[Literal, tuple[frozenset[Literal], float]]:
+        env) -> dict[Literal, frozenset[StateOutcome]]:
     valid_actions_successors = {}
     for a in actions:
         successors = None
         try:
             successors = frozenset({
-                s_.literals
-                for s_ in pddlcore.get_successor_states(
+                StateOutcome(prob=prob, literals=s_.literals)
+                for s_, prob in pddlcore.get_successor_states(
                     from_literals(s),
                     a,
                     env.domain,
-                    raise_error_on_invalid_action=True)
+                    return_probs=True,
+                    raise_error_on_invalid_action=True).items()
             })
         except pddlcore.InvalidAction:
             continue

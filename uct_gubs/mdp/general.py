@@ -8,6 +8,7 @@ from pddlgym.inference import check_goal
 from pddlgym.structs import Literal
 
 from uct_gubs import context, error, tree, pddl, rendering
+from uct_gubs.mdp.types import ExtendedState
 
 SQRT_TWO = math.sqrt(2)
 
@@ -16,9 +17,8 @@ def risk_exp_fn(lamb):
     return lambda cumcost: np.exp(lamb * cumcost)
 
 
-def simulate_with_uct_gubs(ctx: context.ProblemContext,
-                           s: tuple[frozenset[Literal],
-                                    float], actions: frozenset, n_steps: int):
+def simulate_with_uct_gubs(ctx: context.ProblemContext, s: ExtendedState,
+                           actions: frozenset, n_steps: int):
     mdp_tree = tree.new_tree(s, 0, actions)
     pi = {}
 
@@ -79,7 +79,8 @@ def uct_gubs(ctx: context.ProblemContext, mdp_tree: tree.Tree,
     return mdp_tree, pi, n_updates
 
 
-def search(ctx: context.ProblemContext, depth, actions, mdp_tree, pi):
+def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
+           pi):
     s = mdp_tree.s
 
     # if goal, return optimal value
@@ -97,7 +98,8 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree, pi):
     # TODO -> give option to use rollout policy and return instead of
     #   initializing values and continuing
     if mdp_tree.is_leaf():
-        mdp_tree.initialize_children(actions, ctx.cost_fn, ctx.h, ctx.env)
+        mdp_tree.initialize_children(actions, ctx.cost_fn, ctx.h, ctx.env,
+                                     ctx.init_count)
         if not mdp_tree.valid_actions:
             # if there aren't valid actions at the current state,
             #  then it is a deadend and its value is 0
@@ -142,24 +144,21 @@ def update_q_value_estimate(q, u_val, has_goal, k_g, n_a):
     return (q * n_a + u_val + k) / (n_a + 1)
 
 
-def sample_next_node(mdp_tree, a, cost_fn, env):
+def sample_next_node(mdp_tree: tree.Tree, a: Literal, cost_fn,
+                     env) -> tree.Tree:
     children = mdp_tree.children
-    next_state = pddlcore.get_successor_state(
-        pddl.from_literals(mdp_tree.s[0]), a, env.domain)
 
-    cost = cost_fn(next_state, a)
     logging.debug("sample_next_node")
     logging.debug(f"state: {rendering.text_render(env, mdp_tree.s[0])}")
     logging.debug(f"action: {a}")
     logging.debug(f"children: {children.keys()}")
-    next_nodes = [
-        child for s_, child in children[a].items()
-        if s_ == (next_state.literals, cost)
-    ]
+    outcomes_next_node = children[a].values()
+    probs_next_nodes = [outcome.prob for outcome in outcomes_next_node]
+    next_nodes = [outcome.node for outcome in outcomes_next_node]
 
-    assert len(next_nodes) == 1, error.MATCHING_CHILD_SAMPLING_ERROR
+    i_next_node = np.random.choice(len(next_nodes), p=probs_next_nodes)
 
-    return next_nodes[0]
+    return next_nodes[i_next_node]
 
 
 # TODO -> see if we can normalize the exploration constant
