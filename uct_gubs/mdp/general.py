@@ -126,9 +126,14 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
             # cost = ctx.cost_fn(s[0], next(iter(actions)))
             # future_cost = cost * (ctx.horizon - 1 - depth)
             return mdp_tree, future_cost, False
-        # TODO -> if len(valid_actions) == 1, then algorithm can be optimized
 
-    a_best = uct_best_action(mdp_tree, ctx.exploration_constant)
+    if (mdp_tree.valid_actions) == 1:
+        # if there's a single valid action, then it is taken
+        a_best = next(iter(mdp_tree.valid_actions))
+        logging.debug(f"taking only valid action {a_best}")
+    else:
+        # otherwise, it is chosen via the UCT equation
+        a_best = uct_best_action(mdp_tree, ctx.exploration_constant)
     cost = ctx.cost_fn(s[0], a_best)
 
     next_node = sample_next_node(mdp_tree, a_best, ctx.cost_fn, ctx.env)
