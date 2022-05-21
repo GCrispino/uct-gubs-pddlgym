@@ -11,6 +11,7 @@ from uct_gubs import pddl
 @dataclass
 class ProblemContext:
     env: PDDLEnv
+    s0: frozenset[Literal]
     problem_index: int
     h: Callable[[frozenset[Literal]], float]
     init_count: float
