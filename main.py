@@ -11,8 +11,6 @@ import uct_gubs.output as output
 import uct_gubs.context as context
 from uct_gubs.mdp.types import ExtendedState
 
-# TODO -> optimize code based on profiling
-
 matplotlib.use('TkAgg')
 
 args = argparsing.parse_args()
@@ -48,13 +46,20 @@ ctx = context.ProblemContext(env, obs.literals, problem_index, h_u, h_p,
 
 found_goal_results = np.zeros(args.n_rounds, dtype=bool)
 cumcost_results = np.zeros(args.n_rounds)
+actions_initial_state_results = {}
 for i in range(args.n_rounds):
     logging.info(f'computing policy for round {i}')
     start = time.perf_counter()
-    mdp_tree, pi_func, found_goal, cumcost = mdp.simulate_with_uct_gubs(
-        ctx, ExtendedState(obs.literals, 0), actions, args.n_sim_steps)
+    (mdp_tree, pi_func, found_goal, cumcost,
+     action_initial_state) = mdp.simulate_with_uct_gubs(
+         ctx, ExtendedState(obs.literals, 0), actions, args.n_sim_steps)
     found_goal_results[i] = found_goal
     cumcost_results[i] = cumcost
+    if action_initial_state not in actions_initial_state_results:
+        actions_initial_state_results[action_initial_state] = [0, []]
+    actions_initial_state_results[action_initial_state][0] += 1
+    actions_initial_state_results[action_initial_state][1].append(
+        mdp_tree.qs[action_initial_state])
 
     final_time = time.perf_counter() - start
 
@@ -73,6 +78,20 @@ logging.info(
     f" +- {cumcost_results[found_goal_results].std()}")
 logging.info(f"average round cumcost: {cumcost_results.mean()}" +
              f" +- {cumcost_results.std()}")
+
+# compute data for action taken at initial state for each round
+logging.info("actions taken at initial state:")
+
+action_initial_state_result_counts = {
+    a: res[0]
+    for a, res in actions_initial_state_results.items()
+}
+action_initial_state_result_values = {
+    a: f'{np.array(res[1]).mean()} +- {np.array(res[1]).std()}'
+    for a, res in actions_initial_state_results.items()
+}
+logging.info(f"  counts: {action_initial_state_result_counts}")
+logging.info(f"  values: {action_initial_state_result_values}")
 
 n_episodes = 500
 

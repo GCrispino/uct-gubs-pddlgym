@@ -52,6 +52,10 @@ def simulate_with_uct_gubs(ctx: context.ProblemContext, s: ExtendedState,
                      f"state {rendering.text_render(ctx.env, s.literals)}" +
                      f" cost {s.cumcost}")
         a_best = pi[s]
+
+        if depth == 0:
+            action_initial_state = a_best
+
         logging.info(f"optimal action at initial state: {a_best}")
         logging.info(f"{mdp_tree.qs}{cur_tree.qs}")
         logging.info(
@@ -62,6 +66,8 @@ def simulate_with_uct_gubs(ctx: context.ProblemContext, s: ExtendedState,
         cost = ctx.cost_fn(s.literals, a_best)
         cumcost += cost
 
+        depth += 1
+
     def pi_func(s):
         logging.debug(f"{len(pi)}")
         logging.debug("states in pi:")
@@ -69,7 +75,7 @@ def simulate_with_uct_gubs(ctx: context.ProblemContext, s: ExtendedState,
             logging.debug(f"  {s_}")
         return pi[s]
 
-    return mdp_tree, pi_func, found_goal, cumcost
+    return mdp_tree, pi_func, found_goal, cumcost, action_initial_state
 
 
 def uct_gubs(ctx: context.ProblemContext, mdp_tree: tree.Tree,
