@@ -6,7 +6,7 @@ import pddlgym.core as pddlcore
 from pddlgym.structs import Literal, Predicate
 
 import uct_gubs.mdp.general as mdp
-from uct_gubs import context, pddl, tree
+from uct_gubs import context, heuristics, pddl, tree
 from test.utils import get_env_info
 
 (tireworld_env, tireworld_problem, tireworld_s0, tireworld_actions,
@@ -14,11 +14,6 @@ from test.utils import get_env_info
 
 exploration_constant = math.sqrt(2)
 actions = np.array([Literal(Predicate("pred", 1), [val]) for val in range(4)])
-
-
-# dummy heuristic function
-def h(_):
-    return 1
 
 
 def build_dict_from_actions(actions):
@@ -143,7 +138,8 @@ class TestSearch(unittest.TestCase):
         lamb = -0.1  # not needed for this test
         k_g = 1  # not needed for this test
         n_rollouts = 0  # not needed for this test
-        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0, h, h, 0,
+        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0,
+                                     heuristics.h_1, heuristics.h_1, 0,
                                      mdp.risk_exp_fn(lamb),
                                      mdp.build_std_cost_fn(tireworld_goal),
                                      mdp.SQRT_TWO, k_g, n_rollouts, horizon)
@@ -166,7 +162,8 @@ class TestSearch(unittest.TestCase):
         k_g = 1
         n_rollouts = 0  # not needed for this test
         horizon = 10
-        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0, h, h, 0,
+        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0,
+                                     heuristics.h_1, heuristics.h_1, 0,
                                      mdp.risk_exp_fn(lamb),
                                      mdp.build_std_cost_fn(tireworld_goal),
                                      mdp.SQRT_TWO, k_g, n_rollouts, horizon)
@@ -235,7 +232,8 @@ class TestSearch(unittest.TestCase):
         k_g = 1
         n_rollouts = 0  # not needed for this test
         horizon = 10
-        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0, h, h, 0,
+        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0,
+                                     heuristics.h_1, heuristics.h_1, 0,
                                      mdp.risk_exp_fn(lamb),
                                      mdp.build_std_cost_fn(tireworld_goal),
                                      mdp.SQRT_TWO, k_g, n_rollouts, horizon)

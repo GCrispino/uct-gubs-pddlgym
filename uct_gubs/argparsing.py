@@ -2,12 +2,16 @@ import argparse
 import logging
 import math
 
+from uct_gubs import heuristics
+
 DEFAULT_PROB_INDEX = 0
 DEFAULT_HORIZON = 20
 DEFAULT_NROLLOUTS = 1000
 DEFAULT_N_SIM_STEPS = 10
 DEFAULT_EXPLORATION_CONSTANT = math.sqrt(2)
 DEFAULT_INIT_COUNT = 0
+DEFAULT_HEURISTIC_UTILITY = 'shortest_path'
+DEFAULT_HEURISTIC_PROB = 'handcrafted'
 DEFAULT_KG = 1
 DEFAULT_LAMBDA = -0.1
 DEFAULT_LOGGING_LEVEL = logging.INFO
@@ -74,19 +78,35 @@ def parse_args():
         help=("Number of steps to run on simulation" + " (default: %s)") %
         str(DEFAULT_N_SIM_STEPS))
     parser.add_argument(
+        '--h_u',
+        type=argconv(shortest_path=h_u_loader, h1=h_1_loader),
+        metavar=f"{{{', '.join(['h1', 'shortest_path'])}}}",
+        default=DEFAULT_HEURISTIC_UTILITY,
+        dest='h_u_loader',
+        help="Heuristic function used to estimate utility values (default: %s)"
+        % str(DEFAULT_HEURISTIC_UTILITY))
+    parser.add_argument(
+        '--h_p',
+        type=argconv(handcrafted=h_p_loader, h1=h_1_loader),
+        metavar=f"{{{', '.join(['handcrafted', 'h1'])}}}",
+        default=DEFAULT_HEURISTIC_PROB,
+        dest='h_p_loader',
+        help="Heuristic function used to estimate probability-to-goal values" +
+        "(default: %s)" % str(DEFAULT_HEURISTIC_PROB))
+    parser.add_argument(
         '--exploration_constant',
         type=float,
         default=DEFAULT_EXPLORATION_CONSTANT,
         dest='exploration_constant',
         help="Exploration constant used for UCT equation (default: %s)" %
-        str(DEFAULT_INIT_COUNT))
+        str(DEFAULT_EXPLORATION_CONSTANT))
     parser.add_argument(
         '--h_init_count',
         type=float,
         default=DEFAULT_INIT_COUNT,
         dest='h_init_count',
         help="Visit count to give to initialized nodes (default: %s)" %
-        str(DEFAULT_EXPLORATION_CONSTANT))
+        str(DEFAULT_INIT_COUNT))
     parser.add_argument('--k_g',
                         dest='k_g',
                         type=float,
@@ -107,7 +127,7 @@ def parse_args():
                         default=DEFAULT_LOGGING_LEVEL,
                         dest='logging_level',
                         help="Logging level (default: %s)" %
-                        str(DEFAULT_NROLLOUTS))
+                        str(DEFAULT_LOGGING_LEVEL))
     parser.add_argument('--logging_output_file',
                         type=str,
                         default=DEFAULT_LOGGING_FILE,
@@ -152,3 +172,18 @@ def parse_args():
         " plot stats about these runs (default: %s)" % DEFAULT_PLOT_STATS)
 
     return parser.parse_args()
+
+
+# Heuristic loaders
+
+
+def h_1_loader(*args, **kwargs):
+    return heuristics.h_1
+
+
+def h_u_loader(*args, **kwargs):
+    return heuristics.build_hu(*args, **kwargs)
+
+
+def h_p_loader(*args, **kwargs):
+    return heuristics.build_hp(*args, **kwargs)

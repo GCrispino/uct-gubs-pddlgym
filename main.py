@@ -6,7 +6,6 @@ import numpy as np
 import matplotlib
 
 import uct_gubs.argparsing as argparsing
-import uct_gubs.heuristics as heuristics
 import uct_gubs.mdp.general as mdp
 import uct_gubs.output as output
 import uct_gubs.context as context
@@ -30,7 +29,6 @@ goal = problem.goal
 prob_objects = frozenset(problem.objects)
 
 obs, _ = env.reset()
-h_v = heuristics.build_hv(env, args.lamb)
 
 actions = np.array(
     list(sorted(env.action_space.all_ground_literals(obs, valid_only=False))))
@@ -43,12 +41,8 @@ start = time.perf_counter()
 u = mdp.risk_exp_fn(args.lamb)
 
 
-def h1(_):
-    return 1
-
-
-h_u = heuristics.build_hu(env, args.lamb)
-h_p = heuristics.build_hp(env, args.lamb)
+h_u = args.h_u_loader(env, args.lamb)
+h_p = args.h_p_loader(env)
 
 ctx = context.ProblemContext(env, obs.literals, problem_index, h_u, h_p,
                              args.h_init_count, u, mdp.build_std_cost_fn(goal),

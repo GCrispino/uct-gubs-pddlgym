@@ -7,6 +7,10 @@ from pddlgym.structs import ProbabilisticEffect, State
 from uct_gubs import utils
 
 
+def h_1(_):
+    return 1
+
+
 def shortest_path_from_goal(graph, V_i, s0):
     queue = deque([s0])
     d = {s: 0 for s in graph}
@@ -292,7 +296,7 @@ prob_heuristic_functions = {
 }
 
 
-def build_hv(env, lamb):
+def build_hu(env, lamb):
     data = (None if env.spec.id not in value_heuristic_data_functions else
             value_heuristic_data_functions[env.spec.id](env))
 
