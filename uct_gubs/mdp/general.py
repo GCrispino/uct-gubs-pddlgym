@@ -97,8 +97,7 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
     # TODO -> give option to use rollout policy and return instead of
     #   initializing values and continuing
     if mdp_tree.is_leaf():
-        mdp_tree.initialize_children(actions, ctx.cost_fn, ctx.h, ctx.env,
-                                     ctx.init_count)
+        mdp_tree.initialize_children(ctx, actions)
         if not mdp_tree.valid_actions:
             # if there aren't valid actions at the current state,
             #  then it is a deadend and its value is 0

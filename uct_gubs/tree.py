@@ -5,6 +5,7 @@ from typing import Callable
 from pddlgym.structs import Literal
 
 from uct_gubs.pddl import get_valid_actions_and_outcomes
+from uct_gubs.context import ProblemContext
 from uct_gubs.mdp.types import ExtendedState
 
 
@@ -27,24 +28,24 @@ class Tree:
     def is_leaf(self):
         return all((c is None for c in self.children.values()))
 
-    def initialize_children(self, actions, cost_fn, h, env, h_weight=0):
+    def initialize_children(self, ctx: ProblemContext, actions):
         logging.debug("initializing children")
         valid_actions_outcomes = get_valid_actions_and_outcomes(
-            self.s[0], actions, env)
+            self.s[0], actions, ctx.env)
 
         self.valid_actions = frozenset(valid_actions_outcomes)
         logging.debug("found following valid actions on initialization: " +
                       f"{self.valid_actions}")
 
-        self.n = h_weight
+        self.n = ctx.init_count
         for a, outcomes in valid_actions_outcomes.items():
             # initialize q-value with heuristic for current state
             # TODO -> incorporate prob heuristic here
-            self.qs[a] = h(self.s[0])
+            self.qs[a] = ctx.h_u(self.s[0]) + ctx.h_p(self.s[0]) * ctx.k_g
             self.n_as[a] = 0
 
             # get new cumcost for next states
-            new_cost = cost_fn(self.s[0], a)
+            new_cost = ctx.cost_fn(self.s[0], a)
 
             # initialize each child's subtree
             self.children[a] = {}

@@ -139,9 +139,15 @@ class TestSearch(unittest.TestCase):
 
         mdp_tree = tree.new_tree((tireworld_s0.literals, 0), 0,
                                  tireworld_actions)
-        mdp_tree.initialize_children(tireworld_actions,
-                                     mdp.build_std_cost_fn(tireworld_goal), h,
-                                     tireworld_env)
+        horizon = 10
+        lamb = -0.1  # not needed for this test
+        k_g = 1  # not needed for this test
+        n_rollouts = 0  # not needed for this test
+        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0, h, h, 0,
+                                     mdp.risk_exp_fn(lamb),
+                                     mdp.build_std_cost_fn(tireworld_goal),
+                                     mdp.SQRT_TWO, k_g, n_rollouts, horizon)
+        mdp_tree.initialize_children(ctx, tireworld_actions)
         action_movecar12 = pddl.create_literal("movecar", 1, ["location"],
                                                ["l-1-2"])
         sampled_next_node = mdp.sample_next_node(
@@ -160,7 +166,7 @@ class TestSearch(unittest.TestCase):
         k_g = 1
         n_rollouts = 0  # not needed for this test
         horizon = 10
-        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0, h, 0,
+        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0, h, h, 0,
                                      mdp.risk_exp_fn(lamb),
                                      mdp.build_std_cost_fn(tireworld_goal),
                                      mdp.SQRT_TWO, k_g, n_rollouts, horizon)
@@ -229,7 +235,7 @@ class TestSearch(unittest.TestCase):
         k_g = 1
         n_rollouts = 0  # not needed for this test
         horizon = 10
-        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0, h, 0,
+        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0, h, h, 0,
                                      mdp.risk_exp_fn(lamb),
                                      mdp.build_std_cost_fn(tireworld_goal),
                                      mdp.SQRT_TWO, k_g, n_rollouts, horizon)

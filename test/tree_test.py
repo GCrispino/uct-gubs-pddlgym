@@ -1,5 +1,6 @@
 import unittest
 
+import uct_gubs.context as context
 import uct_gubs.mdp.general as mdp
 import uct_gubs.pddl as pddl
 import uct_gubs.tree as tree
@@ -16,6 +17,15 @@ class TestTree(unittest.TestCase):
         # dummy heuristic function
         def h(_):
             return 1
+
+        lamb = -0.1
+        k_g = 1
+        n_rollouts = 0
+        horizon = 10
+        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0, h, h, 0,
+                                     mdp.risk_exp_fn(lamb),
+                                     mdp.build_std_cost_fn(tireworld_goal),
+                                     mdp.SQRT_TWO, k_g, n_rollouts, horizon)
 
         mdp_tree = tree.new_tree((tireworld_s0.literals, 0), 0,
                                  tireworld_actions)
@@ -53,12 +63,11 @@ class TestTree(unittest.TestCase):
             if a in {action_movecar12, action_movecar21}
         })
 
-        mdp_tree.initialize_children(tireworld_actions,
-                                     mdp.build_std_cost_fn(tireworld_goal), h,
-                                     tireworld_env)
+        mdp_tree.initialize_children(ctx, tireworld_actions)
+
         assert mdp_tree.valid_actions == expected_actions
 
-        assert mdp_tree.qs == {a: 1 for a in expected_actions}
+        assert mdp_tree.qs == {a: 2 for a in expected_actions}
         assert mdp_tree.n_as == {a: 0 for a in expected_actions}
 
         children = mdp_tree.children

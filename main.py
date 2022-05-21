@@ -47,9 +47,10 @@ def h1(_):
     return 1
 
 
-h = heuristics.build_hv(env, args.lamb)
+h_u = heuristics.build_hu(env, args.lamb)
+h_p = heuristics.build_hp(env, args.lamb)
 
-ctx = context.ProblemContext(env, obs.literals, problem_index, h,
+ctx = context.ProblemContext(env, obs.literals, problem_index, h_u, h_p,
                              args.h_init_count, u, mdp.build_std_cost_fn(goal),
                              args.exploration_constant, args.k_g,
                              args.n_rollouts, args.horizon)

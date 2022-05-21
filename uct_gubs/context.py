@@ -13,7 +13,8 @@ class ProblemContext:
     env: PDDLEnv
     s0: frozenset[Literal]
     problem_index: int
-    h: Callable[[frozenset[Literal]], float]
+    h_u: Callable[[frozenset[Literal]], float]
+    h_p: Callable[[frozenset[Literal]], float]
     init_count: float
     u: Callable[[float], float]
     cost_fn: Callable[[frozenset[Literal], Literal], float]
