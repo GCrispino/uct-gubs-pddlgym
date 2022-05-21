@@ -22,33 +22,45 @@ def simulate_with_uct_gubs(ctx: context.ProblemContext, s: ExtendedState,
     pi = {}
 
     cur_tree = mdp_tree
-    i = 0
+    depth = 0
+    found_goal = False
+    cumcost = s.cumcost
     while True:
-        if i == n_steps - 1:
+        if depth == n_steps - 1:
             logging.info("reached maximum number of simulation steps. Exiting")
 
         s = cur_tree.s
         logging.info("running uct-gubs for " +
-                     f"state {rendering.text_render(ctx.env, s[0])}" +
-                     f" cost {s[1]}")
+                     f"state {rendering.text_render(ctx.env, s.literals)}" +
+                     f" cost {s.cumcost}")
 
-        if ctx.check_goal(s[0]):
+        if ctx.check_goal(s.literals):
+            found_goal = True
             logging.info("found goal, exiting")
             break
         if len(cur_tree.valid_actions) == 0:
             logging.info("found deadend, exiting")
+
+            # compute remaining cost
+            future_cost = get_remaining_cost_at_deadend(
+                s, ctx.cost_fn, actions, depth, ctx.horizon)
+            cumcost += future_cost
             break
 
         cur_tree, pi, n_updates = uct_gubs(ctx, cur_tree, actions, pi)
         logging.info("finished running uct-gubs for " +
-                     f"state {rendering.text_render(ctx.env, s[0])}" +
-                     f" cost {s[1]}")
+                     f"state {rendering.text_render(ctx.env, s.literals)}" +
+                     f" cost {s.cumcost}")
         a_best = pi[s]
         logging.info(f"optimal action at initial state: {a_best}")
         logging.info(f"{mdp_tree.qs}{cur_tree.qs}")
         logging.info(
             f"value of optimal action at current state: {cur_tree.qs[a_best]}")
         cur_tree = sample_next_node(cur_tree, a_best, ctx.cost_fn, ctx.env)
+        # compute cost of applying this action
+        #  and accumulate that on variable 'cumcost'
+        cost = ctx.cost_fn(s.literals, a_best)
+        cumcost += cost
 
     def pi_func(s):
         logging.debug(f"{len(pi)}")
@@ -57,7 +69,7 @@ def simulate_with_uct_gubs(ctx: context.ProblemContext, s: ExtendedState,
             logging.debug(f"  {s_}")
         return pi[s]
 
-    return mdp_tree, pi_func, n_updates
+    return mdp_tree, pi_func, found_goal, cumcost
 
 
 def uct_gubs(ctx: context.ProblemContext, mdp_tree: tree.Tree,
@@ -103,8 +115,10 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
             #  then it is a deadend and its value is 0
             logging.debug("found deadend on search")
 
-            cost = ctx.cost_fn(s[0], next(iter(actions)))
-            future_cost = cost * (ctx.horizon - 1 - depth)
+            future_cost = get_remaining_cost_at_deadend(
+                s, ctx.cost_fn, actions, depth, ctx.horizon)
+            # cost = ctx.cost_fn(s[0], next(iter(actions)))
+            # future_cost = cost * (ctx.horizon - 1 - depth)
             return mdp_tree, future_cost, False
         # TODO -> if len(valid_actions) == 1, then algorithm can be optimized
 
@@ -157,6 +171,12 @@ def sample_next_node(mdp_tree: tree.Tree, a: Literal, cost_fn,
     i_next_node = np.random.choice(len(next_nodes), p=probs_next_nodes)
 
     return next_nodes[i_next_node]
+
+
+def get_remaining_cost_at_deadend(s: ExtendedState, cost_fn,
+                                  actions: frozenset[Literal], depth, horizon):
+    cost = cost_fn(s.literals, next(iter(actions)))
+    return cost * (horizon - 1 - depth)
 
 
 # TODO -> see if we can normalize the exploration constant

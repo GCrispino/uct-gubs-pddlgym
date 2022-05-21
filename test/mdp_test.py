@@ -7,6 +7,7 @@ from pddlgym.structs import Literal, Predicate
 
 import uct_gubs.mdp.general as mdp
 from uct_gubs import context, heuristics, pddl, tree
+from uct_gubs.mdp.types import ExtendedState
 from test.utils import get_env_info
 
 (tireworld_env, tireworld_problem, tireworld_s0, tireworld_actions,
@@ -132,7 +133,7 @@ class TestSearch(unittest.TestCase):
 
     def test_sample_next_node(self):
 
-        mdp_tree = tree.new_tree((tireworld_s0.literals, 0), 0,
+        mdp_tree = tree.new_tree(ExtendedState(tireworld_s0.literals, 0), 0,
                                  tireworld_actions)
         horizon = 10
         lamb = -0.1  # not needed for this test
@@ -155,7 +156,7 @@ class TestSearch(unittest.TestCase):
 
     def test_search(self):
         # instantiate/create domain and tree
-        mdp_tree = tree.new_tree((tireworld_s0.literals, 0), 0,
+        mdp_tree = tree.new_tree(ExtendedState(tireworld_s0.literals, 0), 0,
                                  tireworld_actions)
 
         lamb = -0.1
@@ -225,7 +226,7 @@ class TestSearch(unittest.TestCase):
         not_flattire = pddl.create_literal("not-flattire")
 
         # instantiate/create domain and tree
-        mdp_tree = tree.new_tree((frozenset({not_flattire}), 0), 0,
+        mdp_tree = tree.new_tree(ExtendedState(frozenset({not_flattire}), 0), 0,
                                  tireworld_actions)
 
         lamb = -0.1

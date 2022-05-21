@@ -3,6 +3,7 @@ import time
 
 import gym
 import matplotlib
+import numpy as np
 
 import uct_gubs.argparsing as argparsing
 import uct_gubs.mdp.general as mdp
@@ -11,7 +12,6 @@ import uct_gubs.context as context
 from uct_gubs.mdp.types import ExtendedState
 
 # TODO -> optimize code based on profiling
-# TODO -> adapt code for doing experiments
 
 matplotlib.use('TkAgg')
 
@@ -36,8 +36,6 @@ n_updates = None
 C_max = None
 keep_cost = False
 
-logging.info('obtaining optimal policy')
-start = time.perf_counter()
 u = mdp.risk_exp_fn(args.lamb)
 
 h_u = args.h_u_loader(env, args.lamb)
@@ -47,16 +45,34 @@ ctx = context.ProblemContext(env, obs.literals, problem_index, h_u, h_p,
                              args.h_init_count, u, mdp.build_std_cost_fn(goal),
                              args.exploration_constant, args.k_g,
                              args.n_rollouts, args.horizon)
-mdp_tree, pi_func, n_updates = mdp.simulate_with_uct_gubs(
-    ctx, ExtendedState(obs.literals, 0), actions, args.n_sim_steps)
-final_time = time.perf_counter() - start
-print("Final updates:", n_updates)
 
-a_best = pi_func((obs.literals, 0))
-logging.info(f"best action at initial state: {a_best}")
-logging.info(f"qs: {mdp_tree.qs}")
-logging.info(f"value of action {a_best} at initial state" +
-             f": {mdp_tree.qs[a_best]}")
+found_goal_results = np.zeros(args.n_rounds, dtype=bool)
+cumcost_results = np.zeros(args.n_rounds)
+for i in range(args.n_rounds):
+    logging.info(f'computing policy for round {i}')
+    start = time.perf_counter()
+    mdp_tree, pi_func, found_goal, cumcost = mdp.simulate_with_uct_gubs(
+        ctx, ExtendedState(obs.literals, 0), actions, args.n_sim_steps)
+    found_goal_results[i] = found_goal
+    cumcost_results[i] = cumcost
+
+    final_time = time.perf_counter() - start
+
+    a_best = pi_func((obs.literals, 0))
+    logging.info(f"finished round {i} on {final_time} seconds")
+    logging.info(f"best action at initial state: {a_best}")
+    logging.info(f"qs: {mdp_tree.qs}")
+    logging.info(f"value of action {a_best} at initial state" +
+                 f": {mdp_tree.qs[a_best]}")
+
+logging.info("finished rounds")
+logging.info(f"average probability-to-goal: {found_goal_results.mean()}" +
+             f" +- {found_goal_results.std()}")
+logging.info(
+    f"average cost-to-goal: {cumcost_results[found_goal_results].mean()}" +
+    f" +- {cumcost_results[found_goal_results].std()}")
+logging.info(f"average round cumcost: {cumcost_results.mean()}" +
+             f" +- {cumcost_results.std()}")
 
 n_episodes = 500
 

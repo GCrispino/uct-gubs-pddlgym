@@ -7,6 +7,7 @@ from uct_gubs import heuristics
 DEFAULT_PROB_INDEX = 0
 DEFAULT_HORIZON = 20
 DEFAULT_NROLLOUTS = 1000
+DEFAULT_NROUNDS = 10
 DEFAULT_N_SIM_STEPS = 10
 DEFAULT_EXPLORATION_CONSTANT = math.sqrt(2)
 DEFAULT_INIT_COUNT = 0
@@ -70,6 +71,13 @@ def parse_args():
         dest='n_rollouts',
         help="Number of maximum rollouts to run on UCT-GUBS (default: %s)" %
         str(DEFAULT_NROLLOUTS))
+    parser.add_argument(
+        '--n_rounds',
+        type=int,
+        default=DEFAULT_NROUNDS,
+        dest='n_rounds',
+        help="Number of simulation rounds to run for UCT-GUBS (default: %s)" %
+        str(DEFAULT_NROUNDS))
     parser.add_argument(
         '--n_sim_steps',
         type=int,
