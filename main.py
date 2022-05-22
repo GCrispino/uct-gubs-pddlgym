@@ -74,9 +74,10 @@ for i in range(args.n_rounds):
 logging.info("finished rounds")
 logging.info(f"average probability-to-goal: {found_goal_results.mean()}" +
              f" +- {found_goal_results.std()}")
-logging.info(
-    f"average cost-to-goal: {cumcost_results[found_goal_results].mean()}" +
-    f" +- {cumcost_results[found_goal_results].std()}")
+if found_goal_results.any():
+    logging.info(
+        f"average cost-to-goal: {cumcost_results[found_goal_results].mean()}" +
+        f" +- {cumcost_results[found_goal_results].std()}")
 logging.info(f"average round cumcost: {cumcost_results.mean()}" +
              f" +- {cumcost_results.std()}")
 
