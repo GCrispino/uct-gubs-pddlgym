@@ -37,6 +37,11 @@ class Tree:
         valid_actions_outcomes = pddl.filter_superfluous_actions(
             self.s[0], initial_valid_actions_outcomes)
 
+        if (redundant_actions := set(valid_actions_outcomes) -
+                set(initial_valid_actions_outcomes)) != set({}):
+            logging.debug(f"detected {len(redundant_actions)} actions:" +
+                          f" {redundant_actions}")
+
         self.valid_actions = frozenset(valid_actions_outcomes)
         logging.debug("found following valid actions on initialization: " +
                       f"{self.valid_actions}")

@@ -69,10 +69,6 @@ def simulate_with_uct_gubs(ctx: context.ProblemContext, s: ExtendedState,
         depth += 1
 
     def pi_func(s):
-        logging.debug(f"{len(pi)}")
-        logging.debug("states in pi:")
-        for s_ in pi:
-            logging.debug(f"  {s_}")
         return pi[s]
 
     return mdp_tree, pi_func, found_goal, cumcost, action_initial_state
@@ -80,14 +76,12 @@ def simulate_with_uct_gubs(ctx: context.ProblemContext, s: ExtendedState,
 
 def uct_gubs(ctx: context.ProblemContext, mdp_tree: tree.Tree,
              actions: frozenset, pi: dict[tuple[Literal, float], Literal]):
-    logging.debug(f"type of mdp_tree: {type(mdp_tree)}")
 
     logging.info("starting rollouts")
 
     start = time.perf_counter()
     for i in range(ctx.n_rollouts):
         search(ctx, 0, actions, mdp_tree, pi)
-    logging.debug(f"type of mdp_tree: {type(mdp_tree)}")
     stop = time.perf_counter()
     logging.info(f"finished rollouts after {stop - start} seconds")
 
@@ -123,8 +117,6 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
 
             future_cost = get_remaining_cost_at_deadend(
                 s, ctx.cost_fn, actions, depth, ctx.horizon)
-            # cost = ctx.cost_fn(s[0], next(iter(actions)))
-            # future_cost = cost * (ctx.horizon - 1 - depth)
             return mdp_tree, future_cost, False
 
     if (mdp_tree.valid_actions) == 1:

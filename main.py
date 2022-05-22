@@ -4,6 +4,7 @@ import time
 import gym
 import matplotlib
 import numpy as np
+from pddlgym.structs import Literal
 
 import uct_gubs.argparsing as argparsing
 import uct_gubs.mdp.general as mdp
@@ -46,7 +47,7 @@ ctx = context.ProblemContext(env, obs.literals, problem_index, h_u, h_p,
 
 found_goal_results = np.zeros(args.n_rounds, dtype=bool)
 cumcost_results = np.zeros(args.n_rounds)
-actions_initial_state_results = {}
+actions_initial_state_results: dict[Literal, list] = {}
 for i in range(args.n_rounds):
     logging.info(f'computing policy for round {i}')
     start = time.perf_counter()
