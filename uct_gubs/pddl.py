@@ -51,3 +51,50 @@ def get_valid_actions_and_outcomes(
         valid_actions_successors[a] = successors
 
     return valid_actions_successors
+
+
+def filter_superfluous_actions(
+    s: frozenset[Literal], actions_outcomes: dict[Literal,
+                                                  frozenset[StateOutcome]]
+) -> dict[Literal, frozenset[StateOutcome]]:
+    """
+        A subset of actions can be ignored from the search if:
+          - all actions on it lead to the same state literals,
+            hence they can't optimal
+          - all actions on it lead to the same
+            successor states. Then, one of these actions can
+            be arbitrarily considered and the other ones
+            can be safely ignored
+    """
+
+    # discover actions with equal outcomes
+    reversed_outcomes: dict[frozenset[StateOutcome], Literal] = {}
+    superfluous_actions = set()
+    for a, outcomes in actions_outcomes.items():
+        if outcomes in reversed_outcomes:
+            # if outcome is equal to one of other action,
+            #   then current action can be pruned
+            print(f"superfluous! {a}, {reversed_outcomes[outcomes]}")
+            superfluous_actions.add(a)
+        reversed_outcomes[outcomes] = a
+
+    # actions whose single outcome is the current state
+    #   can also be ignored
+    cur_state_outcome_set = frozenset({StateOutcome(prob=1, literals=s)})
+    superfluous_actions.update(
+        set({
+            a
+            for a in actions_outcomes
+            if actions_outcomes[a] == cur_state_outcome_set
+        }))
+
+    # reasonable actions are actions that are not superfluous
+    reasonable_actions = set(actions_outcomes) - superfluous_actions
+
+    # compute final dict to return
+    reasonable_actions_outcomes = {
+        a: actions_outcomes[a]
+        for a in reasonable_actions
+    }
+
+    return reasonable_actions_outcomes

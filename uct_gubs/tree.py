@@ -4,7 +4,7 @@ from typing import Callable
 
 from pddlgym.structs import Literal
 
-from uct_gubs.pddl import get_valid_actions_and_outcomes
+from uct_gubs import pddl
 from uct_gubs.context import ProblemContext
 from uct_gubs.mdp.types import ExtendedState
 
@@ -30,8 +30,12 @@ class Tree:
 
     def initialize_children(self, ctx: ProblemContext, actions):
         logging.debug("initializing children")
-        valid_actions_outcomes = get_valid_actions_and_outcomes(
+        initial_valid_actions_outcomes = pddl.get_valid_actions_and_outcomes(
             self.s[0], actions, ctx.env)
+
+        # remove redundant/superfluous actions
+        valid_actions_outcomes = pddl.filter_superfluous_actions(
+            self.s[0], initial_valid_actions_outcomes)
 
         self.valid_actions = frozenset(valid_actions_outcomes)
         logging.debug("found following valid actions on initialization: " +
