@@ -6,7 +6,7 @@ import matplotlib
 import numpy as np
 from pddlgym.structs import Literal
 
-import uct_gubs.argparsing as argparsing
+import uct_gubs.argparsing.plan as argparsing
 import uct_gubs.mdp.general as mdp
 import uct_gubs.output as output
 import uct_gubs.context as context
