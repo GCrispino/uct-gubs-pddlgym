@@ -10,6 +10,7 @@ DEFAULT_NROLLOUTS = 1000
 DEFAULT_NROUNDS = 10
 DEFAULT_N_SIM_STEPS = 10
 DEFAULT_EXPLORATION_CONSTANT = math.sqrt(2)
+DEFAULT_NORMALIZE_EXP_CONSTANT = False
 DEFAULT_INIT_COUNT = 0
 DEFAULT_HEURISTIC_UTILITY = 'shortest_path'
 DEFAULT_HEURISTIC_PROB = 'handcrafted'
@@ -108,6 +109,15 @@ def parse_args():
         dest='exploration_constant',
         help="Exploration constant used for UCT equation (default: %s)" %
         str(DEFAULT_EXPLORATION_CONSTANT))
+    parser.add_argument(
+        '--norm_exploration_constant',
+        default=DEFAULT_NORMALIZE_EXP_CONSTANT,
+        action="store_true",
+        dest='norm_exploration_constant',
+        help="If true, multiplies the exploration constant" +
+        " by the maximum utility value for the node where the UCT equation" +
+        " is being computed (default: %s)" %
+        str(DEFAULT_NORMALIZE_EXP_CONSTANT))
     parser.add_argument(
         '--h_init_count',
         type=float,

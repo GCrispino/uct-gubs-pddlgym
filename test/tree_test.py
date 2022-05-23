@@ -25,7 +25,7 @@ class TestTree(unittest.TestCase):
         ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0, h, h, 0,
                                      mdp.risk_exp_fn(lamb),
                                      mdp.build_std_cost_fn(tireworld_goal),
-                                     mdp.SQRT_TWO, k_g, n_rollouts, horizon)
+                                     mdp.SQRT_TWO, False, k_g, n_rollouts, horizon)
 
         mdp_tree = tree.new_tree((tireworld_s0.literals, 0), 0,
                                  tireworld_actions)

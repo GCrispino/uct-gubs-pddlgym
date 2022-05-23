@@ -125,7 +125,8 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
         logging.debug(f"taking only valid action {a_best}")
     else:
         # otherwise, it is chosen via the UCT equation
-        a_best = uct_best_action(mdp_tree, ctx.exploration_constant)
+        a_best = uct_best_action(mdp_tree, ctx.exploration_constant,
+                                 ctx.norm_exp_constant)
     cost = ctx.cost_fn(s[0], a_best)
 
     next_node = sample_next_node(mdp_tree, a_best, ctx.cost_fn, ctx.env)
@@ -182,13 +183,14 @@ def get_remaining_cost_at_deadend(s: ExtendedState, cost_fn,
     return cost * (horizon - 1 - depth)
 
 
-# TODO -> see if we can normalize the exploration constant
-#   according to the costs of the problem
-def uct_value(q, n, n_a, exploration_constant=SQRT_TWO):
+def uct_value(a, qs, n, n_a, exploration_constant=SQRT_TWO, normalize=False):
     if n == 0 or n_a == 0:
         return math.inf
 
-    return q + exploration_constant * math.sqrt(math.log(n) / n_a)
+    if normalize:
+        exploration_constant = exploration_constant * max(qs.values())
+
+    return qs[a] + exploration_constant * math.sqrt(math.log(n) / n_a)
 
 
 # selects one action from multiple maximal actions
@@ -201,11 +203,13 @@ def select_first_criterion(max_actions):
 
 def uct_best_action(mdp_tree,
                     exploration_constant,
+                    norm_exploration_constant=False,
                     action_selection_criterion=select_first_criterion):
     actions = np.array(list(sorted(mdp_tree.valid_actions)))
     uct_vals = np.array([
-        uct_value(mdp_tree.qs[a], mdp_tree.n, mdp_tree.n_as[a],
-                  exploration_constant) for a in actions
+        uct_value(a, mdp_tree.qs, mdp_tree.n, mdp_tree.n_as[a],
+                  exploration_constant, norm_exploration_constant)
+        for a in actions
     ])
     max_uct_val = np.max(uct_vals)
     max_actions = actions[uct_vals == max_uct_val]

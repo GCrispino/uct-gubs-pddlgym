@@ -19,6 +19,7 @@ class ProblemContext:
     u: Callable[[float], float]
     cost_fn: Callable[[frozenset[Literal], Literal], float]
     exploration_constant: float
+    norm_exp_constant: bool
     k_g: float
     n_rollouts: int
     horizon: int

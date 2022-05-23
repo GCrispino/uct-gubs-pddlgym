@@ -24,28 +24,45 @@ def build_dict_from_actions(actions):
 class TestUCTValue(unittest.TestCase):
 
     def test_uct_value(self):
-        q = 1
+        a = pddl.create_literal("a")
+        qs = {a: 1}
         n = 10
         n_a = 3
 
-        uct_val = mdp.uct_value(q, n, n_a, exploration_constant)
+        uct_val = mdp.uct_value(a, qs, n, n_a, exploration_constant)
         assert uct_val == 2.2389740629499464
 
     def test_uct_value_first_visit_node(self):
-        q = 1
+        a = pddl.create_literal("a")
+        qs = {a: 1}
         n = 0
         n_a = 0
 
-        uct_val = mdp.uct_value(q, n, n_a, exploration_constant)
+        uct_val = mdp.uct_value(a, qs, n, n_a, exploration_constant)
         assert uct_val == math.inf
 
     def test_uct_value_first_visit_action(self):
-        q = 1
+        a = pddl.create_literal("a")
+        qs = {a: 1}
         n = 10
         n_a = 0
 
-        uct_val = mdp.uct_value(q, n, n_a, exploration_constant)
+        uct_val = mdp.uct_value(a, qs, n, n_a, exploration_constant)
         assert uct_val == math.inf
+
+    def test_uct_value_with_normalization(self):
+        a = pddl.create_literal("a")
+        qs = {a: 2}
+        n = 10
+        n_a = 3
+
+        uct_val = mdp.uct_value(a,
+                                qs,
+                                n,
+                                n_a,
+                                exploration_constant,
+                                normalize=True)
+        assert uct_val == 4.477948125899893
 
 
 class TestUCTBestAction(unittest.TestCase):
@@ -143,7 +160,8 @@ class TestSearch(unittest.TestCase):
                                      heuristics.h_1, heuristics.h_1, 0,
                                      mdp.risk_exp_fn(lamb),
                                      mdp.build_std_cost_fn(tireworld_goal),
-                                     mdp.SQRT_TWO, k_g, n_rollouts, horizon)
+                                     mdp.SQRT_TWO, False, k_g, n_rollouts,
+                                     horizon)
         mdp_tree.initialize_children(ctx, tireworld_actions)
         action_movecar12 = pddl.create_literal("movecar", 1, ["location"],
                                                ["l-1-2"])
@@ -167,7 +185,8 @@ class TestSearch(unittest.TestCase):
                                      heuristics.h_1, heuristics.h_1, 0,
                                      mdp.risk_exp_fn(lamb),
                                      mdp.build_std_cost_fn(tireworld_goal),
-                                     mdp.SQRT_TWO, k_g, n_rollouts, horizon)
+                                     mdp.SQRT_TWO, False, k_g, n_rollouts,
+                                     horizon)
         pi = {}
 
         # run search
@@ -226,8 +245,8 @@ class TestSearch(unittest.TestCase):
         not_flattire = pddl.create_literal("not-flattire")
 
         # instantiate/create domain and tree
-        mdp_tree = tree.new_tree(ExtendedState(frozenset({not_flattire}), 0), 0,
-                                 tireworld_actions)
+        mdp_tree = tree.new_tree(ExtendedState(frozenset({not_flattire}), 0),
+                                 0, tireworld_actions)
 
         lamb = -0.1
         k_g = 1
@@ -237,7 +256,8 @@ class TestSearch(unittest.TestCase):
                                      heuristics.h_1, heuristics.h_1, 0,
                                      mdp.risk_exp_fn(lamb),
                                      mdp.build_std_cost_fn(tireworld_goal),
-                                     mdp.SQRT_TWO, k_g, n_rollouts, horizon)
+                                     mdp.SQRT_TWO, False, k_g, n_rollouts,
+                                     horizon)
         pi = {}
 
         # run search

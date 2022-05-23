@@ -12,6 +12,8 @@ import uct_gubs.output as output
 import uct_gubs.context as context
 from uct_gubs.mdp.types import ExtendedState
 
+# TODO -> set seeds to make runs deterministic
+
 matplotlib.use('TkAgg')
 
 args = argparsing.parse_args()
@@ -42,7 +44,8 @@ h_p = args.h_p_loader(env)
 
 ctx = context.ProblemContext(env, obs.literals, problem_index, h_u, h_p,
                              args.h_init_count, u, mdp.build_std_cost_fn(goal),
-                             args.exploration_constant, args.k_g,
+                             args.exploration_constant,
+                             args.norm_exploration_constant, args.k_g,
                              args.n_rollouts, args.horizon)
 
 found_goal_results = np.zeros(args.n_rounds, dtype=bool)
