@@ -1,6 +1,7 @@
-import unittest
+import pytest
 
 import uct_gubs.context as context
+import uct_gubs.heuristics as heuristics
 import uct_gubs.mdp.general as mdp
 import uct_gubs.pddl as pddl
 import uct_gubs.tree as tree
@@ -11,24 +12,29 @@ from test.utils import get_env_info
  tireworld_goal) = get_env_info("PDDLEnvTireworld-v0")
 
 
-class TestTree(unittest.TestCase):
+@pytest.fixture
+def ctx():
+    lamb = -0.1
+    k_g = 1
+    n_rollouts = 0
+    horizon = 10
+    ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0,
+                                 heuristics.h_1, heuristics.h_1, 0,
+                                 mdp.risk_exp_fn(lamb),
+                                 mdp.build_std_cost_fn(tireworld_goal),
+                                 mdp.SQRT_TWO, False, k_g, n_rollouts, horizon)
+    return ctx
 
-    def test_initialize_children(self):
-        # dummy heuristic function
-        def h(_):
-            return 1
 
-        lamb = -0.1
-        k_g = 1
-        n_rollouts = 0
-        horizon = 10
-        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0, h, h, 0,
-                                     mdp.risk_exp_fn(lamb),
-                                     mdp.build_std_cost_fn(tireworld_goal),
-                                     mdp.SQRT_TWO, False, k_g, n_rollouts, horizon)
+@pytest.fixture
+def mdp_tree(ctx):
+    mdp_tree = tree.new_tree((tireworld_s0.literals, 0), 0, tireworld_actions)
+    return mdp_tree
 
-        mdp_tree = tree.new_tree((tireworld_s0.literals, 0), 0,
-                                 tireworld_actions)
+
+class TestTree:
+
+    def test_initialize_children(self, ctx, mdp_tree):
 
         # Literals
         ####
@@ -96,3 +102,11 @@ class TestTree(unittest.TestCase):
                                                     (s_21_notflat, 1)})
         for child_node_outcome in child_movecar21.values():
             assert child_node_outcome.node.depth == mdp_tree.depth + 1
+
+    def test_size(self, ctx, mdp_tree):
+        size = mdp_tree.size()
+        assert size == 1
+
+        mdp_tree.initialize_children(ctx, tireworld_actions)
+        size = mdp_tree.size()
+        assert size == 5

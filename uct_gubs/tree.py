@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from math import inf
 from typing import Callable
 
 from pddlgym.structs import Literal
@@ -72,6 +73,30 @@ class Tree:
         for child_outcomes_dict in self.children.values():
             for child_outcome in child_outcomes_dict.values():
                 child_outcome.node.traverse(fn)
+
+    def size(self) -> int:
+        size = 0
+
+        def count(tree):
+            nonlocal size
+            size += 1
+
+        self.traverse(count)
+
+        return size
+
+    def best_action(self) -> Literal:
+        max_q = -inf
+        a_max = None
+        for a, q in self.qs.items():
+            if q > max_q:
+                max_q = q
+                a_max = a
+
+        return a_max
+
+    def v(self) -> float:
+        return self.qs[self.best_action]
 
 
 def new_tree(s: ExtendedState, depth, actions) -> Tree:
