@@ -15,7 +15,7 @@ class ProblemContext:
     problem_index: int
     h_u: Callable[[frozenset[Literal]], float]
     h_p: Callable[[frozenset[Literal]], float]
-    init_count: float
+    init_count: int
     u: Callable[[float], float]
     cost_fn: Callable[[frozenset[Literal], Literal], float]
     exploration_constant: float

@@ -120,7 +120,7 @@ def parse_args():
         str(DEFAULT_NORMALIZE_EXP_CONSTANT))
     parser.add_argument(
         '--h_init_count',
-        type=float,
+        type=int,
         default=DEFAULT_INIT_COUNT,
         dest='h_init_count',
         help="Visit count to give to initialized nodes (default: %s)" %
