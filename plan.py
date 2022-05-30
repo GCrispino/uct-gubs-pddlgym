@@ -11,6 +11,7 @@ import uct_gubs.mdp.general as mdp
 import uct_gubs.output as output
 import uct_gubs.context as context
 from uct_gubs.mdp.types import ExtendedState
+from uct_gubs.utils import nparr_to_list
 
 # TODO -> set seeds to make runs deterministic
 
@@ -18,7 +19,6 @@ matplotlib.use('TkAgg')
 
 args = argparsing.parse_args()
 
-print("logging level:", args.logging_level)
 logging.basicConfig(level=args.logging_level,
                     filename=args.logging_output_file)
 
@@ -39,8 +39,8 @@ keep_cost = False
 
 u = mdp.risk_exp_fn(args.lamb)
 
-h_u = args.h_u_loader(env, args.lamb)
-h_p = args.h_p_loader(env)
+h_u = args.h_u_loader[1](env, args.lamb)
+h_p = args.h_p_loader[1](env)
 
 ctx = context.ProblemContext(env, obs.literals, problem_index, h_u, h_p,
                              args.h_init_count, u, mdp.build_std_cost_fn(goal),
@@ -50,24 +50,36 @@ ctx = context.ProblemContext(env, obs.literals, problem_index, h_u, h_p,
 
 found_goal_results = np.zeros(args.n_rounds, dtype=bool)
 cumcost_results = np.zeros(args.n_rounds)
+time_results = np.zeros(args.n_rounds, dtype=int)
+tree_size_results = np.zeros(args.n_rounds, dtype=int)
+values_s0 = np.zeros(args.n_rounds)
+best_actions_s0 = [""] * args.n_rounds
 actions_initial_state_results: dict[Literal, list] = {}
 for i in range(args.n_rounds):
     logging.info(f'computing policy for round {i}')
     start = time.perf_counter()
-    (mdp_tree, pi_func, found_goal, cumcost,
-     action_initial_state) = mdp.simulate_with_uct_gubs(
-         ctx, ExtendedState(obs.literals, 0), actions, args.n_sim_steps)
+    (mdp_tree, pi_func, found_goal, cumcost, action_initial_state,
+     final_time) = mdp.run_round(ctx, ExtendedState(obs.literals, 0), actions,
+                                 args.n_sim_steps)
     found_goal_results[i] = found_goal
     cumcost_results[i] = cumcost
+    time_results[i] = final_time
+    tree_size_results[i] = mdp_tree.size()
     if action_initial_state not in actions_initial_state_results:
         actions_initial_state_results[action_initial_state] = [0, []]
     actions_initial_state_results[action_initial_state][0] += 1
     actions_initial_state_results[action_initial_state][1].append(
         mdp_tree.qs[action_initial_state])
 
+    # TODO -> get more relevant time as data
+    #     - each round time?
+    #     - time for planning on first state?
     final_time = time.perf_counter() - start
 
     a_best = pi_func((obs.literals, 0))
+    best_actions_s0[i] = str(a_best)
+    values_s0[i] = mdp_tree.qs[a_best]
+
     logging.info(f"finished round {i} on {final_time} seconds")
     logging.info(f"best action at initial state: {a_best}")
     logging.info(f"qs: {mdp_tree.qs}")
@@ -117,4 +129,18 @@ if args.simulate:
                                  keep_cost=keep_cost)
 
 if args.render_and_save:
-    output.ouptut_info(obs, final_time, n_updates, output_dir, args, mdp_tree)
+    serializable_args = {
+        **vars(args), "h_u": args.h_u_loader[0],
+        "h_p": args.h_p_loader[0]
+    }
+    del serializable_args["h_u_loader"]
+    del serializable_args["h_p_loader"]
+
+    out = output.Output(cpu_times=nparr_to_list(time_results),
+                        tree_sizes=nparr_to_list(tree_size_results),
+                        cumcosts=nparr_to_list(cumcost_results),
+                        found_goal=nparr_to_list(found_goal_results),
+                        values_s0=nparr_to_list(values_s0),
+                        best_actions_s0=best_actions_s0,
+                        args=serializable_args)
+    out.output_info(output_dir)

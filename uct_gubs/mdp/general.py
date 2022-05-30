@@ -16,10 +16,12 @@ def risk_exp_fn(lamb):
     return lambda cumcost: np.exp(lamb * cumcost)
 
 
-def simulate_with_uct_gubs(ctx: context.ProblemContext, s: ExtendedState,
-                           actions: frozenset, n_steps: int):
+def run_round(ctx: context.ProblemContext, s: ExtendedState,
+              actions: frozenset, n_steps: int):
     mdp_tree = tree.new_tree(s, 0, actions)
     pi = {}
+
+    start = time.perf_counter()
 
     cur_tree = mdp_tree
     depth = 0
@@ -68,10 +70,13 @@ def simulate_with_uct_gubs(ctx: context.ProblemContext, s: ExtendedState,
 
         depth += 1
 
+    final_time = time.perf_counter() - start
+
     def pi_func(s):
         return pi[s]
 
-    return mdp_tree, pi_func, found_goal, cumcost, action_initial_state
+    return (mdp_tree, pi_func, found_goal, cumcost, action_initial_state,
+            final_time)
 
 
 def uct_gubs(ctx: context.ProblemContext, mdp_tree: tree.Tree,

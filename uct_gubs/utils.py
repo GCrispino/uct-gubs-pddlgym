@@ -1,6 +1,8 @@
 import json
 import os
 import re
+
+import numpy as np
 from pddlgym.core import PDDLEnv
 from pddlgym.structs import State, TypedEntity
 
@@ -244,3 +246,7 @@ def get_succ_states_actions(s, A, succ_states):
         for s_ in succ_states[s, a]:
             succs.add(s_)
     return succs
+
+
+def nparr_to_list(arr: np.ndarray) -> list:
+    return [x.item() for x in arr]

@@ -30,10 +30,7 @@ DEFAULT_OUTPUT_DIR = "./output"
 def argconv(**convs):
 
     def parse_argument(arg):
-        print(arg)
-        print(f"convs:{convs}")
         if arg in convs:
-            print(f"result: {convs[arg]}")
             return convs[arg]
         else:
             msg = "invalid choice: {!r} (choose from {})"
@@ -88,7 +85,8 @@ def parse_args():
         str(DEFAULT_N_SIM_STEPS))
     parser.add_argument(
         '--h_u',
-        type=argconv(shortest_path=h_u_loader, h1=h_1_loader),
+        type=argconv(shortest_path=("shortest_path", h_u_loader),
+                     h1=("h1", h_1_loader)),
         metavar=f"{{{', '.join(['h1', 'shortest_path'])}}}",
         default=DEFAULT_HEURISTIC_UTILITY,
         dest='h_u_loader',
@@ -96,7 +94,8 @@ def parse_args():
         % str(DEFAULT_HEURISTIC_UTILITY))
     parser.add_argument(
         '--h_p',
-        type=argconv(handcrafted=h_p_loader, h1=h_1_loader),
+        type=argconv(handcrafted=("handcrafted", h_p_loader),
+                     h1=("h1", h_1_loader)),
         metavar=f"{{{', '.join(['handcrafted', 'h1'])}}}",
         default=DEFAULT_HEURISTIC_PROB,
         dest='h_p_loader',

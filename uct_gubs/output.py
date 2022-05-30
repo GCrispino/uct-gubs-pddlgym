@@ -1,4 +1,6 @@
+import logging
 import os
+from dataclasses import dataclass
 from datetime import datetime
 
 import imageio
@@ -30,8 +32,8 @@ def run_episode(pi,
         if print_history:
             state_text_render = utils.text_render(env, old_obs)
             if state_text_render:
-                print("State:", state_text_render)
-            print(" ", pi(old_obs), reward)
+                logging.info(f"State: {state_text_render}")
+            logging.info(f" {pi(old_obs)} {reward}")
 
         if _render_and_save:
             img = env.render()
@@ -84,7 +86,27 @@ def plot_stats(env, pi_func, n_episodes):
     plt.show()
 
 
-def render_and_save(env, output_dir):
+@dataclass
+class Output:
+    cpu_times: list[int]
+    tree_sizes: list[int]
+    cumcosts: list[float]
+    found_goal: list[bool]
+    values_s0: list[float]
+    best_actions_s0: list[str]
+    args: dict
+
+    def output_info(self, output_dir):
+        output_filename = str(datetime.time(datetime.now())) + '.json'
+
+        output_file_path = utils.output(output_filename,
+                                        vars(self),
+                                        output_dir=output_dir)
+        if output_file_path:
+            logging.info(f"Algorithm result written to {output_file_path}")
+
+
+def get_and_create_output_dir(env, output_dir):
     output_outdir = output_dir
     domain_name = env.domain.domain_name
     problem_name = domain_name + str(
@@ -94,23 +116,4 @@ def render_and_save(env, output_dir):
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
-
-def output_info(s0, final_time, n_updates, output_dir, args, explicit_graph):
-    output_filename = str(datetime.time(datetime.now())) + '.json'
-    output_file_path = utils.output(output_filename, {
-        **vars(args),
-        'cpu_time':
-        final_time,
-        'n_updates':
-        n_updates,
-        'explicit_graph_size':
-        len(explicit_graph),
-        'value_s0_gubs':
-        explicit_graph[(s0.literals, 0)]['value'] +
-        args.k_g * explicit_graph[(s0.literals, 0)]['prob'],
-        'prob_s0_gubs':
-        explicit_graph[(s0.literals, 0)]['prob'],
-    },
-                                    output_dir=output_dir)
-    if output_file_path:
-        print("Algorithm result written to ", output_file_path)
+    return output_dir
