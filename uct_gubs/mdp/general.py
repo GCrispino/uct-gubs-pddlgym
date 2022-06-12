@@ -27,6 +27,7 @@ def run_round(ctx: context.ProblemContext, s: ExtendedState,
     depth = 0
     found_goal = False
     cumcost = s.cumcost
+    n_updates = 0
     while True:
         if depth == n_steps - 1:
             logging.info("reached maximum number of simulation steps. Exiting")
@@ -49,7 +50,7 @@ def run_round(ctx: context.ProblemContext, s: ExtendedState,
             cumcost += future_cost
             break
 
-        cur_tree, pi, n_updates = uct_gubs(ctx, cur_tree, actions, pi)
+        cur_tree, pi, _n_updates = uct_gubs(ctx, cur_tree, actions, pi)
         logging.info("finished running uct-gubs for " +
                      f"state {rendering.text_render(ctx.env, s.literals)}" +
                      f" cost {s.cumcost}")
@@ -67,6 +68,7 @@ def run_round(ctx: context.ProblemContext, s: ExtendedState,
         #  and accumulate that on variable 'cumcost'
         cost = ctx.cost_fn(s.literals, a_best)
         cumcost += cost
+        n_updates += _n_updates
 
         depth += 1
 
@@ -76,7 +78,7 @@ def run_round(ctx: context.ProblemContext, s: ExtendedState,
         return pi[s]
 
     return (mdp_tree, pi_func, found_goal, cumcost, action_initial_state,
-            final_time)
+            final_time, n_updates)
 
 
 def uct_gubs(ctx: context.ProblemContext, mdp_tree: tree.Tree,
@@ -85,13 +87,13 @@ def uct_gubs(ctx: context.ProblemContext, mdp_tree: tree.Tree,
     logging.info("starting rollouts")
 
     start = time.perf_counter()
+    n_updates = 0
     for i in range(ctx.n_rollouts):
-        search(ctx, 0, actions, mdp_tree, pi)
+        _, _, _, _n_updates = search(ctx, 0, actions, mdp_tree, pi)
+        n_updates += _n_updates
     stop = time.perf_counter()
     logging.info(f"finished rollouts after {stop - start} seconds")
 
-    # TODO -> count number of updates
-    n_updates = 0
     return mdp_tree, pi, n_updates
 
 
@@ -103,12 +105,12 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
     if check_goal(pddl.from_literals(s[0]),
                   ctx.env.problems[ctx.problem_index].goal):
         logging.debug("found goal on search")
-        return mdp_tree, 0, True
+        return mdp_tree, 0, True, 0
 
     # == or > ?
     if depth == ctx.horizon - 1:
         logging.debug("reached max horizon")
-        return mdp_tree, 0, False
+        return mdp_tree, 0, False, 0
 
     # if leaf, initialize children
     # TODO -> give option to use rollout policy and return instead of
@@ -122,7 +124,7 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
 
             future_cost = get_remaining_cost_at_deadend(
                 s, ctx.cost_fn, actions, depth, ctx.horizon)
-            return mdp_tree, future_cost, False
+            return mdp_tree, future_cost, False, 0
 
     if (mdp_tree.valid_actions) == 1:
         # if there's a single valid action, then it is taken
@@ -136,7 +138,8 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
 
     next_node = sample_next_node(mdp_tree, a_best, ctx.cost_fn, ctx.env)
 
-    _, future_cost, has_goal = search(ctx, depth + 1, actions, next_node, pi)
+    _, future_cost, has_goal, n_updates = search(ctx, depth + 1, actions,
+                                                 next_node, pi)
 
     cumcost = cost + future_cost
     logging.debug(f"n_as: {mdp_tree.n_as}")
@@ -157,7 +160,7 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
                       f" {rendering.text_render(ctx.env, s[0])}")
         pi[s] = a_best
 
-    return mdp_tree, cumcost, has_goal
+    return mdp_tree, cumcost, has_goal, n_updates + 1
 
 
 def update_q_value_estimate(q, u_val, has_goal, k_g, n_a):

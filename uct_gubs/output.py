@@ -88,7 +88,8 @@ def plot_stats(env, pi_func, n_episodes):
 
 @dataclass
 class Output:
-    cpu_times: list[int]
+    cpu_times: list[float]
+    n_updates: list[int]
     tree_sizes: list[int]
     cumcosts: list[float]
     found_goal: list[bool]

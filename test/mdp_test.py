@@ -190,8 +190,18 @@ class TestSearch(unittest.TestCase):
         pi = {}
 
         # run search
-        new_mdp_tree, cumcost, has_goal = mdp.search(ctx, 0, tireworld_actions,
-                                                     mdp_tree, pi)
+        new_mdp_tree, cumcost, has_goal, n_updates = mdp.search(
+            ctx, 0, tireworld_actions, mdp_tree, pi)
+
+        depth = 0
+
+        def get_depth(tree):
+            nonlocal depth
+            depth = max(depth, tree.depth)
+
+        new_mdp_tree.traverse(get_depth)
+        assert n_updates > 0
+        assert n_updates == depth
 
         assert new_mdp_tree == mdp_tree
 
@@ -261,9 +271,10 @@ class TestSearch(unittest.TestCase):
         pi = {}
 
         # run search
-        new_mdp_tree, cumcost, has_goal = mdp.search(ctx, 0, tireworld_actions,
-                                                     mdp_tree, pi)
+        new_mdp_tree, cumcost, has_goal, n_updates = mdp.search(
+            ctx, 0, tireworld_actions, mdp_tree, pi)
 
+        assert n_updates == 0
         assert not has_goal
         assert cumcost == horizon - 1
 

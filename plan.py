@@ -50,7 +50,8 @@ ctx = context.ProblemContext(env, obs.literals, problem_index, h_u, h_p,
 
 found_goal_results = np.zeros(args.n_rounds, dtype=bool)
 cumcost_results = np.zeros(args.n_rounds)
-time_results = np.zeros(args.n_rounds, dtype=int)
+time_results = np.zeros(args.n_rounds, dtype=float)
+n_updates_results = np.zeros(args.n_rounds, dtype=int)
 tree_size_results = np.zeros(args.n_rounds, dtype=int)
 values_s0 = np.zeros(args.n_rounds)
 best_actions_s0 = [""] * args.n_rounds
@@ -58,13 +59,16 @@ actions_initial_state_results: dict[Literal, list] = {}
 for i in range(args.n_rounds):
     logging.info(f'computing policy for round {i}')
     start = time.perf_counter()
-    (mdp_tree, pi_func, found_goal, cumcost, action_initial_state,
-     final_time) = mdp.run_round(ctx, ExtendedState(obs.literals, 0), actions,
-                                 args.n_sim_steps)
+    (mdp_tree, pi_func, found_goal, cumcost, action_initial_state, final_time,
+     n_updates) = mdp.run_round(ctx, ExtendedState(obs.literals, 0), actions,
+                                args.n_sim_steps)
     found_goal_results[i] = found_goal
     cumcost_results[i] = cumcost
     time_results[i] = final_time
-    tree_size_results[i] = mdp_tree.size()
+    n_updates_results[i] = n_updates
+
+    tree_size = mdp_tree.size()
+    tree_size_results[i] = tree_size
     if action_initial_state not in actions_initial_state_results:
         actions_initial_state_results[action_initial_state] = [0, []]
     actions_initial_state_results[action_initial_state][0] += 1
@@ -85,6 +89,8 @@ for i in range(args.n_rounds):
     logging.info(f"qs: {mdp_tree.qs}")
     logging.info(f"value of action {a_best} at initial state" +
                  f": {mdp_tree.qs[a_best]}")
+    logging.info(f"number of updates: {n_updates}")
+    logging.info(f"final tree size: {tree_size}")
 
 logging.info("finished rounds")
 logging.info(f"average probability-to-goal: {found_goal_results.mean()}" +
@@ -95,6 +101,13 @@ if found_goal_results.any():
         f" +- {cumcost_results[found_goal_results].std()}")
 logging.info(f"average round cumcost: {cumcost_results.mean()}" +
              f" +- {cumcost_results.std()}")
+logging.info(f"average cpu time: {time_results.mean()}" +
+             f" +- {time_results.std()}")
+logging.info(f"average number of updates: {n_updates_results.mean()}" +
+             f" +- {n_updates_results.std()}")
+logging.info(f"average tree size: {tree_size_results.mean()}" +
+             f" +- {tree_size_results.std()}")
+
 
 # compute data for action taken at initial state for each round
 logging.info("actions taken at initial state:")
@@ -137,6 +150,7 @@ if args.render_and_save:
     del serializable_args["h_p_loader"]
 
     out = output.Output(cpu_times=nparr_to_list(time_results),
+                        n_updates=nparr_to_list(n_updates_results),
                         tree_sizes=nparr_to_list(tree_size_results),
                         cumcosts=nparr_to_list(cumcost_results),
                         found_goal=nparr_to_list(found_goal_results),
