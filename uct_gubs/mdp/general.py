@@ -134,14 +134,17 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
         # otherwise, it is chosen via the UCT equation
         a_best = uct_best_action(mdp_tree, ctx.exploration_constant,
                                  ctx.norm_exp_constant)
-    cost = ctx.cost_fn(s[0], a_best)
 
     next_node = sample_next_node(mdp_tree, a_best, ctx.cost_fn, ctx.env)
 
+    # TODO -> verify if cumcost is getting incremented correctly
+    #           - for example, some q-values that get logged during the search
+    #               change a little. This might be expected though since near
+    #               the goal choices narrow down
     _, future_cost, has_goal, n_updates = search(ctx, depth + 1, actions,
                                                  next_node, pi)
 
-    cumcost = cost + future_cost
+    cumcost = s[1] + future_cost
     logging.debug(f"n_as: {mdp_tree.n_as}")
     n_a = mdp_tree.n_as[a_best]
     n_a_new = n_a + 1

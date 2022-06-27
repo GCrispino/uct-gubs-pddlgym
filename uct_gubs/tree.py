@@ -54,7 +54,7 @@ class Tree:
             self.n_as[a] = 0
 
             # get new cumcost for next states
-            new_cost = ctx.cost_fn(self.s[0], a)
+            new_cost = ctx.cost_fn(self.s[0], a) + self.s[1]
 
             # initialize each child's subtree
             self.children[a] = {}
