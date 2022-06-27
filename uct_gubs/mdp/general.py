@@ -126,7 +126,7 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
                 s, ctx.cost_fn, actions, depth, ctx.horizon)
             return mdp_tree, future_cost, False, 0
 
-    if (mdp_tree.valid_actions) == 1:
+    if len(mdp_tree.valid_actions) == 1:
         # if there's a single valid action, then it is taken
         a_best = next(iter(mdp_tree.valid_actions))
         logging.debug(f"taking only valid action {a_best}")
