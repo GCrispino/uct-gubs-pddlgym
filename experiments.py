@@ -1,5 +1,6 @@
 import functools
 import itertools
+import logging
 import os
 
 import uct_gubs.argparsing.experiments as argparsing
@@ -31,12 +32,15 @@ vars_args = vars(args)
 combinations = list(
     itertools.product(*map(parse_list_str, vars_args.values())))
 
+# TODO -> set this up properly
+logging.basicConfig(level=logging.INFO)
+
 res = None
-for comb in combinations:
+for i, comb in enumerate(combinations):
     exec_str = gen_exec_str(vars_args, comb)
-    print("exec str:", exec_str)
+    logging.info(f"exec str {i + 1}/{len(combinations)}: {exec_str}")
     res = os.system(exec_str)
     if res != 0:
-        print("got error code", res)
-        print("exiting...")
+        logging.info(f"got error code {res}")
+        logging.info("exiting...")
         break
