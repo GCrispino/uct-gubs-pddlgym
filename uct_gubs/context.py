@@ -15,6 +15,7 @@ class ProblemContext:
     problem_index: int
     h_u: Callable[[frozenset[Literal]], float]
     h_p: Callable[[frozenset[Literal]], float]
+    action_tiebreaker: Callable[[list[Literal]], Literal]
     init_count: int
     u: Callable[[float], float]
     cost_fn: Callable[[frozenset[Literal], Literal], float]
@@ -24,6 +25,7 @@ class ProblemContext:
     n_rollouts: int
     horizon: int
 
+    # TODO -> move to other module
     def check_goal(self, s: frozenset[Literal]):
         return _check_goal(pddl.from_literals(s),
                            self.env.problems[self.problem_index].goal)

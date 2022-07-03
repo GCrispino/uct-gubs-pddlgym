@@ -79,7 +79,10 @@ class TestUCTBestAction(unittest.TestCase):
                              n_as=n_as,
                              qs=qs,
                              children=None)
-        best_action = mdp.uct_best_action(mdp_tree, exploration_constant)
+        best_action = mdp.uct_best_action(
+            mdp_tree,
+            exploration_constant,
+            action_selection_criterion=mdp.select_first_criterion)
         assert best_action == actions[2]
 
     def test_uct_best_action_large_constant(self):
@@ -94,7 +97,11 @@ class TestUCTBestAction(unittest.TestCase):
                              n_as=n_as,
                              qs=qs,
                              children=None)
-        best_action = mdp.uct_best_action(mdp_tree, 80)
+        best_action = mdp.uct_best_action(
+            mdp_tree,
+            80,
+            action_selection_criterion=mdp.select_first_criterion)
+
         assert best_action == actions[3]
 
     def test_uct_best_action_first_visit(self):
@@ -110,7 +117,10 @@ class TestUCTBestAction(unittest.TestCase):
                              n_as=n_as,
                              qs=qs,
                              children=None)
-        best_action = mdp.uct_best_action(mdp_tree, exploration_constant)
+        best_action = mdp.uct_best_action(
+            mdp_tree,
+            exploration_constant,
+            action_selection_criterion=mdp.select_first_criterion)
         assert best_action == actions[0]
 
     def test_uct_best_action_only_not_visited(self):
@@ -127,12 +137,15 @@ class TestUCTBestAction(unittest.TestCase):
                              n_as=n_as,
                              qs=qs,
                              children=None)
-        best_action = mdp.uct_best_action(mdp_tree, exploration_constant)
+        best_action = mdp.uct_best_action(
+            mdp_tree,
+            exploration_constant,
+            action_selection_criterion=mdp.select_first_criterion)
 
         assert best_action == actions[1]
 
 
-class TestUpdateQEstimate(unittest.TestCase):
+class TestUpdateQEstimate:
 
     def test_update_q_estimate(self):
         q = 0.5

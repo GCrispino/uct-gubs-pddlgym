@@ -1,7 +1,9 @@
 import argparse
 import logging
 import math
+import random
 
+import uct_gubs.mdp.general as mdp
 from uct_gubs import heuristics
 
 DEFAULT_PROB_INDEX = 0
@@ -11,6 +13,7 @@ DEFAULT_NROUNDS = 10
 DEFAULT_N_SIM_STEPS = 10
 DEFAULT_EXPLORATION_CONSTANT = math.sqrt(2)
 DEFAULT_NORMALIZE_EXP_CONSTANT = False
+DEFAULT_ACTION_TIEBREAKER = 'random'
 DEFAULT_INIT_COUNT = 0
 DEFAULT_HEURISTIC_UTILITY = 'shortest_path'
 DEFAULT_HEURISTIC_PROB = 'handcrafted'
@@ -117,6 +120,16 @@ def parse_args():
         " by the maximum utility value for the node where the UCT equation" +
         " is being computed (default: %s)" %
         str(DEFAULT_NORMALIZE_EXP_CONSTANT))
+    parser.add_argument(
+        '--action_tiebreaker',
+        type=argconv(random=("random", random.choice),
+                     first=("first", mdp.select_first_criterion)),
+        metavar=f"{{{', '.join(['random', 'first'])}}}",
+        default=DEFAULT_ACTION_TIEBREAKER,
+        dest='action_tiebreaker',
+        help="Criterion used to select action between actions" +
+        " that maximized the UCT value  (default: %s)" %
+        str(DEFAULT_ACTION_TIEBREAKER))
     parser.add_argument(
         '--h_init_count',
         type=int,

@@ -1,5 +1,6 @@
 import logging
 import math
+import random
 import time
 
 import numpy as np
@@ -133,7 +134,7 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
     else:
         # otherwise, it is chosen via the UCT equation
         a_best = uct_best_action(mdp_tree, ctx.exploration_constant,
-                                 ctx.norm_exp_constant)
+                                 ctx.norm_exp_constant, ctx.action_tiebreaker)
 
     next_node = sample_next_node(mdp_tree, a_best, ctx.env)
 
@@ -203,7 +204,8 @@ def uct_value(a, qs, n, n_a, exploration_constant=SQRT_TWO, normalize=False):
     return qs[a] + exploration_constant * math.sqrt(math.log(n) / n_a)
 
 
-# selects one action from multiple maximal actions
+# selects first action from multiple maximal actions in the order
+#  they are passed
 def select_first_criterion(max_actions):
     if len(max_actions) == 0:
         raise IndexError("Maximal actions array is empty")
@@ -214,7 +216,7 @@ def select_first_criterion(max_actions):
 def uct_best_action(mdp_tree,
                     exploration_constant,
                     norm_exploration_constant=False,
-                    action_selection_criterion=select_first_criterion):
+                    action_selection_criterion=random.choice):
     actions = np.array(list(sorted(mdp_tree.valid_actions)))
     uct_vals = np.array([
         uct_value(a, mdp_tree.qs, mdp_tree.n, mdp_tree.n_as[a],

@@ -42,8 +42,11 @@ u = mdp.risk_exp_fn(args.lamb)
 h_u = args.h_u_loader[1](env, args.lamb)
 h_p = args.h_p_loader[1](env)
 
+action_tiebreaker = args.action_tiebreaker[1]
+
 ctx = context.ProblemContext(env, obs.literals, problem_index, h_u, h_p,
-                             args.h_init_count, u, mdp.build_std_cost_fn(goal),
+                             action_tiebreaker, args.h_init_count, u,
+                             mdp.build_std_cost_fn(goal),
                              args.exploration_constant,
                              args.norm_exploration_constant, args.k_g,
                              args.n_rollouts, args.horizon)
