@@ -63,7 +63,7 @@ def run_round(ctx: context.ProblemContext, s: ExtendedState,
         logging.info(f"{mdp_tree.qs}{cur_tree.qs}")
         logging.info(
             f"value of optimal action at current state: {cur_tree.qs[a_best]}")
-        cur_tree = sample_next_node(cur_tree, a_best, ctx.cost_fn, ctx.env)
+        cur_tree = sample_next_node(cur_tree, a_best, ctx.env)
         # compute cost of applying this action
         #  and accumulate that on variable 'cumcost'
         cost = ctx.cost_fn(s.literals, a_best)
@@ -135,7 +135,7 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
         a_best = uct_best_action(mdp_tree, ctx.exploration_constant,
                                  ctx.norm_exp_constant)
 
-    next_node = sample_next_node(mdp_tree, a_best, ctx.cost_fn, ctx.env)
+    next_node = sample_next_node(mdp_tree, a_best, ctx.env)
 
     # TODO -> verify if cumcost is getting incremented correctly
     #           - for example, some q-values that get logged during the search
@@ -171,8 +171,7 @@ def update_q_value_estimate(q, u_val, has_goal, k_g, n_a):
     return (q * n_a + u_val + k) / (n_a + 1)
 
 
-def sample_next_node(mdp_tree: tree.Tree, a: Literal, cost_fn,
-                     env) -> tree.Tree:
+def sample_next_node(mdp_tree: tree.Tree, a: Literal, env) -> tree.Tree:
     children = mdp_tree.children
 
     logging.debug("sample_next_node")

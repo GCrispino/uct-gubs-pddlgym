@@ -165,9 +165,8 @@ class TestSearch(unittest.TestCase):
         mdp_tree.initialize_children(ctx, tireworld_actions)
         action_movecar12 = pddl.create_literal("movecar", 1, ["location"],
                                                ["l-1-2"])
-        sampled_next_node = mdp.sample_next_node(
-            mdp_tree, action_movecar12, mdp.build_std_cost_fn(tireworld_goal),
-            tireworld_env)
+        sampled_next_node = mdp.sample_next_node(mdp_tree, action_movecar12,
+                                                 tireworld_env)
         assert sampled_next_node.s in mdp_tree.children[action_movecar12]
         assert sampled_next_node == mdp_tree.children[action_movecar12][
             sampled_next_node.s].node
