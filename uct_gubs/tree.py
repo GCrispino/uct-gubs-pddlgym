@@ -47,6 +47,8 @@ class Tree:
         logging.debug("found following valid actions on initialization: " +
                       f"{self.valid_actions}")
 
+        # TODO -> somehow apply init_count for self.n_as too?
+        #   - maybe check how it's done on PROST
         self.n = ctx.init_count
         for a, outcomes in valid_actions_outcomes.items():
             # initialize q-value with heuristic for current state
@@ -74,16 +76,22 @@ class Tree:
             for child_outcome in child_outcomes_dict.values():
                 child_outcome.node.traverse(fn)
 
+    def traverse_and_accumulate(self, cb, initial_val=0):
+        acc = initial_val
+
+        def _cb(tree):
+            nonlocal acc
+            acc = cb(acc, tree)
+
+        self.traverse(_cb)
+        return acc
+
     def size(self) -> int:
-        size = 0
+        return self.traverse_and_accumulate(lambda acc, _: acc + 1)
 
-        def count(tree):
-            nonlocal size
-            size += 1
-
-        self.traverse(count)
-
-        return size
+    def get_depth(self) -> int:
+        return self.traverse_and_accumulate(
+            lambda acc, tree: max(acc, tree.depth))
 
     def best_action(self) -> Literal:
         max_q = -inf

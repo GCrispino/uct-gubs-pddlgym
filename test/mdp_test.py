@@ -205,13 +205,7 @@ class TestSearch(unittest.TestCase):
         new_mdp_tree, cumcost, has_goal, n_updates = mdp.search(
             ctx, 0, tireworld_actions, mdp_tree, pi)
 
-        depth = 0
-
-        def get_depth(tree):
-            nonlocal depth
-            depth = max(depth, tree.depth)
-
-        new_mdp_tree.traverse(get_depth)
+        depth = new_mdp_tree.get_depth()
         assert n_updates > 0
         assert n_updates == depth
 
@@ -228,11 +222,9 @@ class TestSearch(unittest.TestCase):
         # find set of states in tree
         states_visited = set()
 
-        def add_state_if_visited_callback(node):
-            if node.n != 0:
-                states_visited.add(node.s)
-
-        new_mdp_tree.traverse(add_state_if_visited_callback)
+        new_mdp_tree.traverse_and_accumulate(
+            lambda visited, node: states_visited.add(node.s)
+            if node.n != 0 else visited, states_visited)
 
         assert set(states_visited) == pi_states
 
@@ -290,10 +282,5 @@ class TestSearch(unittest.TestCase):
         assert not has_goal
         assert cumcost == horizon - 1
 
-        max_depth = 0
-
-        def find_max_depth_callback(node):
-            nonlocal max_depth
-            max_depth = max(max_depth, node.depth)
-
-        new_mdp_tree.traverse(find_max_depth_callback)
+        max_depth = new_mdp_tree.get_depth()
+        assert max_depth == 0
