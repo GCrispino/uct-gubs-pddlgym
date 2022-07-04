@@ -1,68 +1,38 @@
 import pytest
 
-import uct_gubs.context as context
-import uct_gubs.heuristics as heuristics
-import uct_gubs.mdp.general as mdp
 import uct_gubs.pddl as pddl
-import uct_gubs.tree as tree
 
+from test import fixtures
 from test.utils import get_env_info
 
 (tireworld_env, tireworld_problem, tireworld_s0, tireworld_actions,
  tireworld_goal) = get_env_info("PDDLEnvTireworld-v0")
 
-
-@pytest.fixture
-def ctx():
-    lamb = -0.1
-    k_g = 1
-    n_rollouts = 0
-    horizon = 10
-    ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0,
-                                 heuristics.h_1, heuristics.h_1, 0,
-                                 mdp.risk_exp_fn(lamb),
-                                 mdp.build_std_cost_fn(tireworld_goal),
-                                 mdp.SQRT_TWO, False, k_g, n_rollouts, horizon)
-    return ctx
-
-
-@pytest.fixture
-def mdp_tree(ctx):
-    mdp_tree = tree.new_tree((tireworld_s0.literals, 0), 0, tireworld_actions)
-    return mdp_tree
-
-@pytest.fixture
-def mdp_tree_cost_1(ctx):
-    mdp_tree = tree.new_tree((tireworld_s0.literals, 1), 0, tireworld_actions)
-    return mdp_tree
+ctx = pytest.fixture(fixtures.ctx)
+mdp_tree = pytest.fixture(fixtures.tireworld_mdp_tree)
+mdp_tree_cost_1 = pytest.fixture(fixtures.tireworld_mdp_tree_cost_1)
 
 
 # Literals
 ####
-action_movecar12 = pddl.create_literal("movecar", 1, ["location"],
-                                       ["l-1-2"])
-action_movecar21 = pddl.create_literal("movecar", 1, ["location"],
-                                       ["l-2-1"])
-vehicleat11 = pddl.create_literal("vehicle-at", 1, ["location"],
-                                  ["l-1-1"])
-vehicleat12 = pddl.create_literal("vehicle-at", 1, ["location"],
-                                  ["l-1-2"])
-vehicleat21 = pddl.create_literal("vehicle-at", 1, ["location"],
-                                  ["l-2-1"])
+action_movecar12 = pddl.create_literal("movecar", 1, ["location"], ["l-1-2"])
+action_movecar21 = pddl.create_literal("movecar", 1, ["location"], ["l-2-1"])
+vehicleat11 = pddl.create_literal("vehicle-at", 1, ["location"], ["l-1-1"])
+vehicleat12 = pddl.create_literal("vehicle-at", 1, ["location"], ["l-1-2"])
+vehicleat21 = pddl.create_literal("vehicle-at", 1, ["location"], ["l-2-1"])
 not_flattire = pddl.create_literal("not-flattire")
 ####
 
 # States
 ####
-s_12_notflat = (tireworld_s0.literals -
-                frozenset({vehicleat11})).union(
-                    frozenset({vehicleat12}))
+s_12_notflat = (tireworld_s0.literals - frozenset({vehicleat11})).union(
+    frozenset({vehicleat12}))
 s_12_flat = s_12_notflat - frozenset({not_flattire})
-s_21_notflat = (tireworld_s0.literals -
-                frozenset({vehicleat11})).union(
-                    frozenset({vehicleat21}))
+s_21_notflat = (tireworld_s0.literals - frozenset({vehicleat11})).union(
+    frozenset({vehicleat21}))
 s_21_flat = s_21_notflat - frozenset({not_flattire})
 ####
+
 
 class TestTree:
 
@@ -149,7 +119,6 @@ class TestTree:
                                                     (s_21_notflat, 2)})
         for child_node_outcome in child_movecar21.values():
             assert child_node_outcome.node.depth == mdp_tree_cost_1.depth + 1
-
 
     def test_size(self, ctx, mdp_tree):
         size = mdp_tree.size()

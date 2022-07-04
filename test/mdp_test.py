@@ -1,13 +1,15 @@
 import math
-import unittest
 
 import numpy as np
 import pddlgym.core as pddlcore
+import pytest
 from pddlgym.structs import Literal, Predicate
 
 import uct_gubs.mdp.general as mdp
-from uct_gubs import context, heuristics, pddl, tree
+from uct_gubs import pddl, tree
 from uct_gubs.mdp.types import ExtendedState
+
+from test import fixtures
 from test.utils import get_env_info
 
 (tireworld_env, tireworld_problem, tireworld_s0, tireworld_actions,
@@ -16,12 +18,15 @@ from test.utils import get_env_info
 exploration_constant = math.sqrt(2)
 actions = np.array([Literal(Predicate("pred", 1), [val]) for val in range(4)])
 
+ctx = pytest.fixture(fixtures.ctx)
+mdp_tree = pytest.fixture(fixtures.tireworld_mdp_tree)
+
 
 def build_dict_from_actions(actions):
     return lambda it: dict(zip(actions, it))
 
 
-class TestUCTValue(unittest.TestCase):
+class TestUCTValue:
 
     def test_uct_value(self):
         a = pddl.create_literal("a")
@@ -65,9 +70,9 @@ class TestUCTValue(unittest.TestCase):
         assert uct_val == 4.477948125899893
 
 
-class TestUCTBestAction(unittest.TestCase):
+class TestUCTBestAction:
 
-    def test_uct_best_action(self):
+    def test_uct_best_action(self, mdp_tree):
         dict_from_actions = build_dict_from_actions(actions)
         n = 10
         n_as = dict_from_actions([1, 2, 3, 4])
@@ -159,22 +164,10 @@ class TestUpdateQEstimate:
         assert round(q_nogoal, 5) == 0.52727
 
 
-class TestSearch(unittest.TestCase):
+class TestSearch:
 
-    def test_sample_next_node(self):
+    def test_sample_next_node(self, ctx, mdp_tree):
 
-        mdp_tree = tree.new_tree(ExtendedState(tireworld_s0.literals, 0), 0,
-                                 tireworld_actions)
-        horizon = 10
-        lamb = -0.1  # not needed for this test
-        k_g = 1  # not needed for this test
-        n_rollouts = 0  # not needed for this test
-        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0,
-                                     heuristics.h_1, heuristics.h_1, 0,
-                                     mdp.risk_exp_fn(lamb),
-                                     mdp.build_std_cost_fn(tireworld_goal),
-                                     mdp.SQRT_TWO, False, k_g, n_rollouts,
-                                     horizon)
         mdp_tree.initialize_children(ctx, tireworld_actions)
         action_movecar12 = pddl.create_literal("movecar", 1, ["location"],
                                                ["l-1-2"])
@@ -184,21 +177,7 @@ class TestSearch(unittest.TestCase):
         assert sampled_next_node == mdp_tree.children[action_movecar12][
             sampled_next_node.s].node
 
-    def test_search(self):
-        # instantiate/create domain and tree
-        mdp_tree = tree.new_tree(ExtendedState(tireworld_s0.literals, 0), 0,
-                                 tireworld_actions)
-
-        lamb = -0.1
-        k_g = 1
-        n_rollouts = 0  # not needed for this test
-        horizon = 10
-        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0,
-                                     heuristics.h_1, heuristics.h_1, 0,
-                                     mdp.risk_exp_fn(lamb),
-                                     mdp.build_std_cost_fn(tireworld_goal),
-                                     mdp.SQRT_TWO, False, k_g, n_rollouts,
-                                     horizon)
+    def test_search(self, ctx, mdp_tree):
         pi = {}
 
         # run search
@@ -253,25 +232,15 @@ class TestSearch(unittest.TestCase):
 
         new_mdp_tree.traverse(get_valid_actions_callback)
 
-    def test_search_deadend(self):
+    def test_search_deadend(self, ctx):
 
         # deadend literal
-        not_flattire = pddl.create_literal("not-flattire")
+        deadend = ExtendedState(frozenset(), 0)
 
         # instantiate/create domain and tree
-        mdp_tree = tree.new_tree(ExtendedState(frozenset({not_flattire}), 0),
-                                 0, tireworld_actions)
+        mdp_tree = tree.new_tree(deadend, 0, tireworld_actions)
 
-        lamb = -0.1
-        k_g = 1
-        n_rollouts = 0  # not needed for this test
         horizon = 10
-        ctx = context.ProblemContext(tireworld_env, tireworld_s0, 0,
-                                     heuristics.h_1, heuristics.h_1, 0,
-                                     mdp.risk_exp_fn(lamb),
-                                     mdp.build_std_cost_fn(tireworld_goal),
-                                     mdp.SQRT_TWO, False, k_g, n_rollouts,
-                                     horizon)
         pi = {}
 
         # run search
