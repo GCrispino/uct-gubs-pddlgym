@@ -145,13 +145,25 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
     _, future_cost, has_goal, n_updates = search(ctx, depth + 1, actions,
                                                  next_node, pi)
 
-    cumcost = s[1] + future_cost
+    action_cost = ctx.cost_fn(s[0], a_best)
+
+    # first fix:
+    # cumcost = future_cost
+
+    cumcost_fromnow = action_cost + future_cost
+    cumcost_total = s[1] + action_cost + future_cost
+
     logging.debug(f"n_as: {mdp_tree.n_as}")
     n_a = mdp_tree.n_as[a_best]
     n_a_new = n_a + 1
-    mdp_tree.qs[a_best] = update_q_value_estimate(mdp_tree.qs[a_best],
-                                                  ctx.u(cumcost), has_goal,
-                                                  ctx.k_g, n_a)
+    mdp_tree.qs[a_best] = update_q_value_estimate(
+        mdp_tree.qs[a_best],
+        ctx.u(cumcost_total),
+        # first fix:
+        # ctx.u(cumcost),
+        has_goal,
+        ctx.k_g,
+        n_a)
 
     # update counts
     mdp_tree.n += 1
@@ -164,7 +176,10 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
                       f" {rendering.text_render(ctx.env, s[0])}")
         pi[s] = a_best
 
-    return mdp_tree, cumcost, has_goal, n_updates + 1
+    # first fix:
+    # return mdp_tree, cumcost, has_goal, n_updates + 1
+
+    return mdp_tree, cumcost_fromnow, has_goal, n_updates + 1
 
 
 def update_q_value_estimate(q, u_val, has_goal, k_g, n_a):

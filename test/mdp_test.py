@@ -253,3 +253,85 @@ class TestSearch:
 
         max_depth = new_mdp_tree.get_depth()
         assert max_depth == 0
+
+    def test_search_goal(self, ctx):
+        # literals
+        vehicle_at_l_1_1_literal = pddl.create_literal("vehicle-at", 1,
+                                                       ["location"], ["l-1-1"])
+        vehicle_at_l_2_2_literal = pddl.create_literal("vehicle-at", 1,
+                                                       ["location"], ["l-2-2"])
+        vehicle_at_l_3_1_literal = pddl.create_literal("vehicle-at", 1,
+                                                       ["location"], ["l-3-1"])
+        vehicle_at_l_1_3_literal = pddl.create_literal("vehicle-at", 1,
+                                                       ["location"], ["l-1-3"])
+
+        # literal sets
+        vehicle_at_l_2_2_state_literals = tireworld_s0.literals - frozenset(
+            {vehicle_at_l_1_1_literal}) | frozenset({vehicle_at_l_2_2_literal})
+        vehicle_at_l_3_1_state_literals = tireworld_s0.literals - frozenset(
+            {vehicle_at_l_1_1_literal}) | frozenset({vehicle_at_l_3_1_literal})
+        goal_state_literals = tireworld_s0.literals - frozenset(
+            {vehicle_at_l_1_1_literal}) | frozenset({vehicle_at_l_1_3_literal})
+
+        # extended states
+        goal_state = ExtendedState(goal_state_literals, 4)
+        vehicle_at_l_2_2_state = ExtendedState(vehicle_at_l_2_2_state_literals,
+                                               3)
+
+        vehicle_at_l_3_1_state = ExtendedState(vehicle_at_l_3_1_state_literals,
+                                               2)
+
+        # actions
+        dummy_action_a = pddl.create_literal("a")
+        dummy_action_b = pddl.create_literal("b")
+        actions = frozenset({dummy_action_a, dummy_action_b})
+
+        # state nodes
+        vehicle_at_l_3_1_tree = tree.new_tree(vehicle_at_l_3_1_state, 2,
+                                              actions)
+
+        vehicle_at_l_2_2_tree = tree.new_tree(vehicle_at_l_2_2_state, 3,
+                                              actions)
+        goal_tree = tree.new_tree(goal_state, 4, actions)
+        goal_tree.qs = {dummy_action_a: 0, dummy_action_b: 0}
+        goal_tree.n_as = {dummy_action_a: 0, dummy_action_b: 0}
+
+        vehicle_at_l_2_2_tree.children = {
+            dummy_action_a: {
+                goal_tree.s: tree.NodeOutcome(prob=1, node=goal_tree)
+            }
+        }
+        vehicle_at_l_2_2_tree.qs = {dummy_action_a: 0, dummy_action_b: 0}
+        vehicle_at_l_2_2_tree.n_as = {dummy_action_a: 0, dummy_action_b: 2}
+
+        vehicle_at_l_3_1_tree.children = {
+            dummy_action_a: {
+                vehicle_at_l_2_2_tree.s:
+                tree.NodeOutcome(prob=1, node=vehicle_at_l_2_2_tree)
+            },
+            dummy_action_b: {  # make action b the same just so it's not empty
+                vehicle_at_l_2_2_tree.s:
+                tree.NodeOutcome(prob=1, node=vehicle_at_l_2_2_tree)
+            }
+        }
+        vehicle_at_l_3_1_tree.qs = {dummy_action_a: 0, dummy_action_b: 0}
+        vehicle_at_l_3_1_tree.n_as = {dummy_action_a: 0, dummy_action_b: 2}
+
+        # run search from state at l-3-1
+        _, cumcost, has_goal, n_updates = mdp.search(ctx, 2, actions,
+                                                     vehicle_at_l_3_1_tree, {})
+
+        # assertions
+        assert has_goal
+        assert cumcost == 2
+        assert n_updates == 2
+
+        u = ctx.u(vehicle_at_l_3_1_state.cumcost + 2) + ctx.k_g
+        assert vehicle_at_l_2_2_tree.n_as == {
+            dummy_action_a: 1,
+            dummy_action_b: 2
+        }
+        assert vehicle_at_l_2_2_tree.qs == {
+            dummy_action_a: u,
+            dummy_action_b: 0
+        }
