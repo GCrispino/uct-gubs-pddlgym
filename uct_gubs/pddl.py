@@ -60,7 +60,7 @@ def filter_superfluous_actions(
     """
         A subset of actions can be ignored from the search if:
           - all actions on it lead to the same state literals,
-            hence they can't optimal
+            hence they can't be optimal
           - all actions on it lead to the same
             successor states. Then, one of these actions can
             be arbitrarily considered and the other ones

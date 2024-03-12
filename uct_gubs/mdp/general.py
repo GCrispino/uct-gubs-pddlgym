@@ -55,6 +55,8 @@ def run_round(ctx: context.ProblemContext, s: ExtendedState,
         logging.info("finished running uct-gubs for " +
                      f"state {rendering.text_render(ctx.env, s.literals)}" +
                      f" cost {s.cumcost}")
+
+        # TODO -> Fix KeyError here
         a_best = pi[s]
 
         if depth == 0:
