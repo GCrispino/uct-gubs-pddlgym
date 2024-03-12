@@ -195,6 +195,20 @@ class TestSearch:
         # accumulate cost should be no bigger than H - 1
         assert cumcost <= ctx.horizon - 1
 
+        maxcost = 0
+
+        def get_max_cost(tree):
+            nonlocal maxcost
+            maxcost = max(maxcost, tree.s.cumcost)
+
+        new_mdp_tree.traverse(get_max_cost)
+        if has_goal:
+            # accumulate cost should be no bigger than
+            #   max depth *in this domain*
+            assert cumcost <= depth
+            assert maxcost <= depth
+            assert cumcost != 0
+
         # assert states in policy dict
         pi_states = set(pi)
 
