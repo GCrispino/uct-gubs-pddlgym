@@ -151,6 +151,7 @@ if args.render_and_save:
     }
     del serializable_args["h_u_loader"]
     del serializable_args["h_p_loader"]
+    del serializable_args["action_tiebreaker"]
 
     out = output.Output(cpu_times=nparr_to_list(time_results),
                         n_updates=nparr_to_list(n_updates_results),
