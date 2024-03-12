@@ -30,8 +30,9 @@ def run_round(ctx: context.ProblemContext, s: ExtendedState,
     cumcost = s.cumcost
     n_updates = 0
     while True:
-        if depth == n_steps - 1:
+        if depth == n_steps:
             logging.info("reached maximum number of simulation steps. Exiting")
+            break
 
         s = cur_tree.s
         logging.info("running uct-gubs for " +
@@ -118,18 +119,29 @@ def search(ctx: context.ProblemContext, depth, actions, mdp_tree: tree.Tree,
     # if leaf, initialize children
     # TODO -> give option to use rollout policy and return instead of
     #   initializing values and continuing
+    # TODO -> add options to disallow actions that only goes to a previous state that was already visited?
+    #           - for example, in grid world domains (such as Navigation and Tireworld), moving right and then moving left on deterministic (and maybe even probabilistic) states
     if mdp_tree.is_leaf():
+        # TODO -> verificar se depois do deadend ser inicializado ele ainda é uma folha e, portanto, cai nesse if
         mdp_tree.initialize_children(ctx, actions)
         if not mdp_tree.valid_actions:
             # if there aren't valid actions at the current state,
             #  then it is a deadend and its value is 0
-            logging.debug("found deadend on search")
+            logging.debug("found leaf deadend on search")
 
             future_cost = get_remaining_cost_at_deadend(
                 s, ctx.cost_fn, actions, depth, ctx.horizon)
             return mdp_tree, future_cost, False, 0
 
-    if len(mdp_tree.valid_actions) == 1:
+    if len(mdp_tree.valid_actions) == 0:
+        # found deadend
+
+        logging.debug("found deadend on search")
+        exit("found deadend on search")
+        future_cost = get_remaining_cost_at_deadend(s, ctx.cost_fn, actions,
+                                                    depth, ctx.horizon)
+        return mdp_tree, future_cost, False, 0
+    elif len(mdp_tree.valid_actions) == 1:
         # if there's a single valid action, then it is taken
         a_best = next(iter(mdp_tree.valid_actions))
         logging.debug(f"taking only valid action {a_best}")
